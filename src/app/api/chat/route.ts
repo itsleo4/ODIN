@@ -1,4 +1,4 @@
-// ODIN NEURAL GRID (DIRECT PROTOCOL V3.2 - MARCH 2026) 🛡️🫀🦾
+// ODIN NEURAL GRID (DIRECT PROTOCOL V3.6 - PRECISE ARCHITECTURAL SYNC) 🛡️🫀🦾
 export async function POST(req: Request) {
   try {
     const { messages, model } = await req.json();
@@ -7,7 +7,7 @@ export async function POST(req: Request) {
       return new Response("No messages.", { status: 400 });
     }
 
-    console.log(`[ODIN] Architecting with: ${model}`);
+    console.log(`[ODIN] Architecting with Elite ID: ${model}`);
 
     let url = ""; 
     let apiKey = "";
@@ -21,28 +21,31 @@ export async function POST(req: Request) {
       temperature: 0.1
     };
 
-    // ----------------- INTELLIGENCE CORE MAPPING (2026) -----------------
+    // ----------------- INTELLIGENCE CORE SYNC (PRECISE MATCH V3.6) -----------------
 
     switch (model) {
       case "Stockmark-2-100b":
         url = "https://integrate.api.nvidia.com/v1/chat/completions";
-        apiKey = process.env.STOCKMARK_API_KEY || "";
+        // REMOVED _API_KEY SUFFIX TO MATCH .ENV
+        apiKey = process.env.STOCKMARK_2_100B_INSTRUCT || "";
         modelId = "stockmark/stockmark-2-100b-instruct";
         break;
       case "GPT-OSS-120b":
         url = "https://integrate.api.nvidia.com/v1/chat/completions";
-        apiKey = process.env.GPT_OSS_API_KEY || "";
+        // REMOVED _API_KEY SUFFIX TO MATCH .ENV
+        apiKey = process.env.GPT_OSS_120B || "";
         modelId = "openai/gpt-oss-120b";
         break;
       case "DeepSeek-V3.2":
-        // This is the NVIDIA NIM version of DeepSeek V3.2
         url = "https://integrate.api.nvidia.com/v1/chat/completions";
-        apiKey = process.env.DEEPSEEK_NVIDIA_API_KEY || "";
+        // REMOVED _API_KEY SUFFIX TO MATCH .ENV
+        apiKey = process.env.DEEPSEEK_V3_2 || "";
         modelId = "deepseek-ai/deepseek-v3.2";
         break;
       case "Qwen3-Coder-480b":
         url = "https://integrate.api.nvidia.com/v1/chat/completions";
-        apiKey = process.env.QWEN3_CODER_API_KEY || "";
+        // REMOVED _API_KEY SUFFIX TO MATCH .ENV
+        apiKey = process.env.QWEN3_CODER_480B_A35B_INSTRUCT || "";
         modelId = "qwen/qwen3-coder-480b-a35b-instruct";
         break;
       case "Gemini-1.5-Pro":
@@ -66,12 +69,12 @@ export async function POST(req: Request) {
         break;
       default:
         url = "https://integrate.api.nvidia.com/v1/chat/completions";
-        apiKey = process.env.GPT_OSS_API_KEY || "";
+        apiKey = process.env.GPT_OSS_120B || "";
         modelId = "openai/gpt-oss-120b";
     }
 
     if (!apiKey && !url.includes("googleapis")) {
-       return new Response(`0:"⚠️ Engine Access Denied: Missing API Key for ${model} in ODIN Backend."\n`, { headers: { "Content-Type": "text/plain" } });
+       return new Response(`0:"⚠️ Engine Access Denied: Missing Key for ${model} in ODIN Backend."\n`, { headers: { "Content-Type": "text/plain" } });
     }
 
     // ----------------- THE DIRECT FETCH EXECUTION -----------------
