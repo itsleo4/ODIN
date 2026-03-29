@@ -1,5 +1,6 @@
-// @ts-nocheck
 "use client";
+
+export const dynamic = "force-dynamic";
 
 import { 
   LogOut, Send, Code, MonitorPlay, PanelLeftClose, PanelLeft, 
@@ -42,6 +43,22 @@ export default function App() {
 }
 `;
 
+// --- TYPES ---
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  experimental_attachments?: any[];
+  created_at?: string;
+}
+
+interface Conversation {
+  id: string;
+  title: string;
+  model: string;
+  updated_at: string;
+}
+
 export default function Workspace() {
   const router = useRouter();
   const supabase = createClient();
@@ -55,11 +72,11 @@ export default function Workspace() {
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
 
   // Persistence States
-  const [conversations, setConversations] = useState([]);
-  const [activeChatId, setActiveChatId] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   // Vision / Multimodal / Interrupt State
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -80,7 +97,7 @@ export default function Workspace() {
   }, []);
 
   // 2. LOAD CHAPTER
-  const loadChat = async (id) => {
+  const loadChat = async (id: string) => {
     if (!id) return;
     setIsLoading(true);
     setActiveChatId(id);
@@ -201,7 +218,7 @@ export default function Workspace() {
 
     } catch (err: any) {
       if (err.name === 'AbortError') { console.log('Aborted.'); } 
-      else { setMessages(prev => [...prev, { role: "assistant", content: `⚠️ ERROR: ${err.message}. Check your elite AI keys.` }]); }
+      else { setMessages(prev => [...prev, { id: Math.random().toString(36), role: "assistant", content: `⚠️ ERROR: ${err.message}. Check your elite AI keys.` }]); }
     } finally {
       setIsLoading(false); abortControllerRef.current = null;
     }
