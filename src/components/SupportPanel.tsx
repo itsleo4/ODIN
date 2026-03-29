@@ -18,24 +18,24 @@ export function SupportPanel({ isOpen, onClose }: SupportPanelProps) {
 
   const services = {
     upi: {
-      id: "7082103328@axl",
-      qr: "https://i.ibb.co/nqNg7nxK/upi-qr.png",
+      id: "bharti00077-2@okaxis",
+      qr: "https://i.ibb.co/rRHZvvd2/upi-qr.png",
       label: "UPI Payment",
       color: "text-green-400",
       bg: "bg-green-500/10",
       desc: "Fastest way to support local development."
     },
     paypal: {
-      id: "nitinkumar-dev",
-      qr: "https://i.ibb.co/Q3yqK7Z4/paypal-qr.png",
+      id: "@PawanKumar35438",
+      qr: "https://i.ibb.co/CKv4bVd7/p-qr.png",
       label: "PayPal Global",
       color: "text-blue-400",
       bg: "bg-blue-500/10",
       desc: "Ideal for international neural-grid funding."
     },
     gmail: {
-      id: "bhola.kumar.91.99@gmail.com",
-      qr: "https://i.ibb.co/B59vNtg3/gmail-qr.png",
+      id: "bharti00077@gmail.com",
+      qr: "https://i.ibb.co/3YW8KrCL/g-qr.png",
       label: "Direct Contact",
       color: "text-red-400",
       bg: "bg-red-500/10",
@@ -51,8 +51,16 @@ export function SupportPanel({ isOpen, onClose }: SupportPanelProps) {
           
           <motion.div 
             initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative w-full max-w-4xl grid grid-cols-1 lg:grid-cols-2 bg-[#121214] border border-white/10 rounded-[48px] overflow-hidden shadow-3xl"
+            className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto lg:overflow-hidden grid grid-cols-1 lg:grid-cols-2 bg-[#121214] border border-white/10 rounded-[48px] shadow-3xl no-scrollbar"
           >
+            {/* Top Right Close Button (Universal) */}
+            <button 
+              onClick={onClose} 
+              className="absolute top-8 right-8 z-[600] p-3 rounded-full bg-white/5 border border-white/10 hover:border-white/40 hover:bg-white/10 transition-all text-white/40 hover:text-white"
+            >
+               <X className="w-5 h-5" />
+            </button>
+
             {/* Left Col: Branding */}
             <div className="p-12 flex flex-col items-start text-left bg-gradient-to-br from-purple-500/5 to-transparent">
                <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-10 shadow-inner"><Heart className="w-6 h-6 text-purple-400 animate-pulse" /></div>
@@ -62,7 +70,7 @@ export function SupportPanel({ isOpen, onClose }: SupportPanelProps) {
                </p>
 
                <div className="flex flex-col gap-3 w-full">
-                  <a href="https://instagram.com/nitin_official_32" target="_blank" className="w-full flex items-center justify-between p-4 rounded-3xl bg-white/5 border border-white/5 hover:border-purple-500/40 hover:bg-white/10 transition-all group">
+                  <a href="https://instagram.com/odincalm0" target="_blank" className="w-full flex items-center justify-between p-4 rounded-3xl bg-white/5 border border-white/5 hover:border-purple-500/40 hover:bg-white/10 transition-all group">
                      <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-yellow-500 via-red-500 to-purple-600 flex items-center justify-center text-white"><Globe className="w-5 h-5" /></div>
                         <span className="text-[10px] font-black uppercase tracking-widest text-white/60">Social Forge</span>

@@ -1,6 +1,6 @@
 "use client";
 
-import { X, QrCode, Heart, Coffee, Globe, Wallet, Mail, Copy, Check, ChevronLeft, Sparkles, Zap } from "lucide-react";
+import { X, QrCode, Heart, Coffee, Globe, Wallet, Mail, Copy, Check, ChevronLeft, Sparkles, Zap, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import Link from "next/link";
@@ -17,24 +17,25 @@ export default function SupportPage() {
 
   const services = {
     upi: {
-      id: "7082103328@axl",
-      qr: "https://i.ibb.co/nqNg7nxK/upi-qr.png",
+      id: "bharti00077-2@okaxis",
+      qr: "https://i.ibb.co/rRHZvvd2/upi-qr.png",
       label: "UPI Payment",
       color: "text-green-400",
       bg: "bg-green-500/10",
       desc: "Fastest way to support local development."
     },
     paypal: {
-      id: "nitinkumar-dev",
-      qr: "https://i.ibb.co/Q3yqK7Z4/paypal-qr.png",
+      id: "PawanKumar35438",
+      qr: "https://i.ibb.co/CKv4bVd7/p-qr.png",
+      link: "https://www.paypal.me/PawanKumar35438",
       label: "PayPal Global",
       color: "text-blue-400",
       bg: "bg-blue-500/10",
       desc: "Ideal for international neural-grid funding."
     },
     gmail: {
-      id: "bhola.kumar.91.99@gmail.com",
-      qr: "https://i.ibb.co/B59vNtg3/gmail-qr.png",
+      id: "bharti00077@gmail.com",
+      qr: "https://i.ibb.co/3YW8KrCL/g-qr.png",
       label: "Direct Contact",
       color: "text-red-400",
       bg: "bg-red-500/10",
@@ -62,10 +63,9 @@ export default function SupportPage() {
             <h1 className="text-6xl font-black italic uppercase tracking-tighter leading-none mb-6">Support the <br/><span className="text-purple-500 underline decoration-4 underline-offset-8">Architect</span></h1>
             
             <div className="flex items-center gap-4 mb-10">
-               <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Lead Dev: Nitin Kumar</div>
-               <div className="flex -space-x-2">
-                  {[1,2,3].map(i => <div key={i} className="w-8 h-8 rounded-full border-2 border-[#09090b] bg-gray-800 flex items-center justify-center text-[10px] font-bold text-white/20">A{i}</div>)}
-               </div>
+               <a href="https://instagram.com/odincalm0" target="_blank" className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-black text-white/40 uppercase tracking-[0.2em] flex items-center gap-2 hover:bg-white/10 hover:text-white transition-all">
+                  <Globe className="w-3 h-3" /> @odincalm0
+               </a>
             </div>
 
             <div className="relative p-8 bg-white/5 border border-white/10 rounded-[40px] shadow-2xl overflow-hidden group">
@@ -74,7 +74,7 @@ export default function SupportPage() {
                 "ODIN exists because **Nitin Kumar** was so legendarily lazy he taught AI to think for him so he could nap longer. Support his efficient lethargy before he decides your next feature request is 'socially exhausting' to implement."
                </p>
                <div className="mt-8 flex items-center gap-3 text-[10px] font-black text-purple-500/60 uppercase tracking-widest">
-                  <Zap className="w-4 h-4 fill-current" /> Forge Enterprise Support Grid V2.5
+                  <Zap className="w-4 h-4 fill-current" /> Forge Enterprise Support Grid V3.0
                </div>
             </div>
          </div>
@@ -115,17 +115,24 @@ export default function SupportPage() {
                            <span className={`text-[9px] font-black uppercase tracking-widest ${services[activeTab].color} mb-1 opacity-60`}>Recipient Address</span>
                            <span className="text-[13px] font-bold text-white tracking-tight truncate w-full">{services[activeTab].id}</span>
                         </div>
-                        <button 
-                          onClick={() => copyToClipboard(services[activeTab].id, activeTab)}
-                          className="p-4 bg-white/5 hover:bg-white/10 rounded-2xl transition-all active:scale-90"
-                        >
-                           {copied === activeTab ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5 text-white/20" />}
-                        </button>
+                        <div className="flex gap-2">
+                           {activeTab === "paypal" && (
+                              <button onClick={() => window.open(services.paypal.link, "_blank")} className="p-4 bg-white/5 hover:bg-white/10 rounded-2xl transition-all">
+                                 <ArrowRight className="w-5 h-5 text-blue-400" />
+                              </button>
+                           )}
+                           <button 
+                             onClick={() => copyToClipboard(services[activeTab].id, activeTab)}
+                             className="p-4 bg-white/5 hover:bg-white/10 rounded-2xl transition-all active:scale-90"
+                           >
+                              {copied === activeTab ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5 text-white/20" />}
+                           </button>
+                        </div>
                      </div>
                   </motion.div>
                </AnimatePresence>
 
-               <div className="mt-12 text-[10px] font-black text-white/10 uppercase tracking-[0.5em] text-center">Solo Dev Mode Active 🛡️🦾📂</div>
+               <div className="mt-12 text-[10px] font-black text-white/10 uppercase tracking-[0.5em] text-center">Pure Singularity Mode Active 🛡️🦾📂</div>
             </div>
          </div>
       </motion.div>
