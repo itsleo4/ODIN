@@ -1,4 +1,4 @@
-// ODIN NEURAL GRID (DIRECT PROTOCOL V4.1 - PURE TITANS SYNC) 🛡️🫀🦾
+// ODIN NEURAL GRID (DIRECT PROTOCOL V4.2 - OPTIMIZED TITANS) 🛡️🫀🦾
 export async function POST(req: Request) {
   try {
     const { messages, model } = await req.json();
@@ -7,7 +7,13 @@ export async function POST(req: Request) {
       return new Response("No messages.", { status: 400 });
     }
 
-    console.log(`[ODIN] Architecting with Pure Elite Titan: ${model}`);
+    console.log(`[ODIN] Architecting with Optimized Titan: ${model}`);
+
+    // SANITIZATION: NVIDIA APIs strictly reject extra fields (like IDs or Attachments)
+    const sanitizedMessages = messages.map((m: any) => ({
+      role: m.role === 'assistant' ? 'assistant' : 'user',
+      content: m.content
+    }));
 
     let url = "https://integrate.api.nvidia.com/v1/chat/completions"; 
     let apiKey = "";
@@ -15,15 +21,19 @@ export async function POST(req: Request) {
     let body: any = {
       messages: [
         { role: "system", content: "You are ODIN, an elite AI developer. Code ONLY in Markdown TSX blocks. Export 'App' as default. Use Tailwind." },
-        ...messages
+        ...sanitizedMessages
       ],
       stream: true,
       temperature: 0.1
     };
 
-    // ----------------- INTELLIGENCE CORE MAPPING (TITANS ONLY) -----------------
+    // ----------------- INTELLIGENCE CORE MAPPING (OPTIMIZED SET) -----------------
 
     switch (model) {
+      case "GPT-OSS-20b":
+        apiKey = process.env.GPT_OSS_20B || "";
+        modelId = "openai/gpt-oss-20b";
+        break;
       case "Mistral-Large-3-675b":
         apiKey = process.env.MISTRAL_LARGE_3_675B || "";
         modelId = "mistralai/mistral-large-3-675b-instruct-2512";
@@ -40,21 +50,17 @@ export async function POST(req: Request) {
         apiKey = process.env.DEEPSEEK_V3_2 || "";
         modelId = "deepseek-ai/deepseek-v3.2";
         break;
-      case "GPT-OSS-120b":
-        apiKey = process.env.GPT_OSS_120B || "";
-        modelId = "openai/gpt-oss-120b";
-        break;
       case "Stockmark-2-100b":
         apiKey = process.env.STOCKMARK_2_100B_INSTRUCT || "";
         modelId = "stockmark/stockmark-2-100b-instruct";
         break;
       default:
-        apiKey = process.env.MISTRAL_LARGE_3_675B || "";
-        modelId = "mistralai/mistral-large-3-675b-instruct-2512";
+        apiKey = process.env.GPT_OSS_20B || "";
+        modelId = "openai/gpt-oss-20b";
     }
 
     if (!apiKey) {
-       return new Response(`0:"⚠️ Engine Access Denied: Missing Key for ${model}."\n`, { headers: { "Content-Type": "text/plain" } });
+       return new Response(`0:"⚠️ Engine Access Denied: Missing Key for ${model} in Vercel Env."\n`, { headers: { "Content-Type": "text/plain" } });
     }
 
     // ----------------- THE DIRECT FETCH EXECUTION -----------------
@@ -72,7 +78,7 @@ export async function POST(req: Request) {
 
     if (!response.ok) {
        const errData = await response.json().catch(() => ({ error: { message: "Unknown Intelligence Failure" } }));
-       return new Response(`0:"⚠️ ENGINE REJECTED (${model}): ${errData.error?.message || "Not Found/Unauthorized"}. Ensure your NVIDIA credits are active."\n`, { 
+       return new Response(`0:"⚠️ ENGINE REJECTED (${model}): ${errData.error?.message || "Not Found/Unauthorized"}. Check your NVIDIA credits."\n`, { 
           status: 200, headers: { "Content-Type": "text/plain" } 
        });
     }

@@ -321,7 +321,7 @@ export default function Workspace() {
               )}
               {isModelDropdownOpen && (
                 <div className="absolute bottom-full left-0 mb-3 w-64 bg-[#18181b] border border-white/5 rounded-2xl shadow-2xl p-2 backdrop-blur-3xl">
-                  {['Mistral-Large-3-675b', 'GLM-5-Reasoning', 'Qwen3-Coder-480b', 'DeepSeek-V3.2', 'GPT-OSS-120b', 'Stockmark-2-100b'].map(m => (
+                  {['GPT-OSS-20b', 'Mistral-Large-3-675b', 'GLM-5-Reasoning', 'Qwen3-Coder-480b', 'DeepSeek-V3.2', 'Stockmark-2-100b'].map(m => (
                     <button key={m} onClick={() => { setSelectedModel(m); setIsModelDropdownOpen(false); }} className={`w-full text-left px-3 py-2.5 rounded-xl hover:bg-[#27272a] text-[10px] font-black uppercase tracking-widest ${selectedModel===m ? 'bg-purple-600/10 text-purple-400' : 'text-gray-500'}`}>{m}</button>
                   ))}
                 </div>
