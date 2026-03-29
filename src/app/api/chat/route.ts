@@ -17,25 +17,33 @@ export async function POST(req: Request) {
     let provider: any = openai; 
     let modelId = model || "gpt-4o";
 
-    // 3. OVERRIDE WITH CUSTOM KEYS IF PRESENT (DYNAMIC INJECTION)
+    // 3. OVERRIDE WITH CUSTOM KEYS IF PRESENT (UNIVERSAL NEURAL ROUTER 🏹)
     if (customKey && customProvider) {
-       if (customProvider === "openai") {
-          const client = createOpenAI({ apiKey: customKey });
-          provider = client;
+       const lowerProvider = customProvider.toLowerCase();
+       
+       if (lowerProvider === "openai") {
+          provider = createOpenAI({ apiKey: customKey });
           modelId = customModel || "gpt-4o";
-       } else if (customProvider === "anthropic") {
-          const client = createAnthropic({ apiKey: customKey });
-          provider = client;
+       } else if (lowerProvider === "anthropic") {
+          provider = createAnthropic({ apiKey: customKey });
           modelId = customModel || "claude-3-5-sonnet-20240620";
-       } else if (customProvider === "google") {
-          const client = createGoogleGenerativeAI({ apiKey: customKey });
-          provider = client;
+       } else if (lowerProvider === "google") {
+          provider = createGoogleGenerativeAI({ apiKey: customKey });
           modelId = customModel || "gemini-1.5-pro";
-       } else if (customProvider === "nvidia") {
-          // NVIDIA NIM IS OPENAI COMPATIBLE
-          const client = createOpenAI({ apiKey: customKey, baseURL: "https://integrate.api.nvidia.com/v1" });
-          provider = client;
+       } else if (lowerProvider === "nvidia" || lowerProvider === "nvidia-nim") {
+          provider = createOpenAI({ apiKey: customKey, baseURL: "https://integrate.api.nvidia.com/v1" });
           modelId = customModel || "qwen/qwen3-coder-480b-a35b-instruct";
+       } else if (lowerProvider === "groq") {
+          provider = createOpenAI({ apiKey: customKey, baseURL: "https://api.groq.com/openai/v1" });
+          modelId = customModel || "llama3-70b-8192";
+       } else if (lowerProvider === "deepseek") {
+          provider = createOpenAI({ apiKey: customKey, baseURL: "https://api.deepseek.com" });
+          modelId = customModel || "deepseek-coder";
+       } else {
+          // UNIVERSAL OPENAI-COMPATIBLE FALLBACK 🌐
+          // Treat the provider name as the modelId and use OpenAI format
+          provider = createOpenAI({ apiKey: customKey });
+          modelId = customProvider; // Use the actual name provided as the model
        }
     } else {
        // STANDARD ENV-BASED ROUTING

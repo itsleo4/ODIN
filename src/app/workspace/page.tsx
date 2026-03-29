@@ -104,12 +104,11 @@ export default function Workspace() {
   useEffect(() => { localStorage.setItem("odin-theme", activeTheme); }, [activeTheme]);
   useEffect(() => { localStorage.setItem("odin-custom-keys", JSON.stringify(customKeys)); }, [customKeys]);
   
-  // MOBILE MASTERY: SCROLL SNAP 📱
+  // AUTO-SCROLL to latest message
   useEffect(() => { 
-     if (chatScrollContainerRef.current) {
-        chatScrollContainerRef.current.scrollTop = chatScrollContainerRef.current.scrollHeight;
-     }
+     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
+
 
   const handleAddKey = () => {
     if (!newKey.name || !newKey.key) return;
@@ -302,7 +301,6 @@ export default function Workspace() {
            { id: "explorer", icon: Folder, label: "Explorer" },
            { id: "search", icon: Search, label: "Search" },
            { id: "support", icon: Heart, label: "Support" },
-           { id: "config", icon: Settings, label: "Settings" }
          ].map(item => (
            <button 
             key={item.id} onClick={() => { if(item.id === "support") setIsSupportOpen(true); else { setViewMode(item.id as any); setIsSidebarOpen(true); } }}
@@ -313,6 +311,10 @@ export default function Workspace() {
            </button>
          ))}
          <div className="mt-auto flex flex-col items-center gap-4">
+            <button onClick={() => router.push("/settings")} className="p-2 rounded-lg text-white/20 hover:text-white transition-all relative group">
+               <Settings className="w-5 h-5" />
+               <div className="absolute left-14 px-2 py-1 bg-black text-[10px] rounded opacity-0 group-hover:opacity-100 whitespace-nowrap border border-white/5">Settings</div>
+            </button>
             <button onClick={handleLogout} className="text-white/20 hover:text-red-500 transition-all group relative"><LogOut className="w-5 h-5" /><div className="absolute left-14 px-2 py-1 bg-black text-[10px] rounded opacity-0 group-hover:opacity-100">Logout</div></button>
          </div>
       </div>
@@ -390,16 +392,10 @@ export default function Workspace() {
                              {customKeys.length === 0 && <div className="text-[9px] font-black uppercase text-purple-500/40 italic px-2">Forge empty. Add keys below 🏹</div>}
                           </div>
                           <div className="bg-black/40 p-3 rounded-2xl border border-white/5 space-y-3">
-                             <input placeholder="Personal Name" className="w-full bg-transparent border-none text-[10px] font-bold outline-none placeholder:text-white/10 text-white" value={newKey.name} onChange={e=>setNewKey({...newKey, name: e.target.value})} />
+                             <input placeholder="Personal Name (e.g. My Llama)" className="w-full bg-transparent border-none text-[10px] font-bold outline-none placeholder:text-white/10 text-white" value={newKey.name} onChange={e=>setNewKey({...newKey, name: e.target.value})} />
+                             <input placeholder="Provider Name (nvidia, groq, openai)" className="w-full bg-transparent border-none text-[10px] font-bold outline-none placeholder:text-white/10 text-white" value={newKey.provider} onChange={e=>setNewKey({...newKey, provider: e.target.value})} />
                              <input placeholder="API Key" className="w-full bg-transparent border-none text-[10px] font-bold outline-none placeholder:text-white/10 text-white" type="password" value={newKey.key} onChange={e=>setNewKey({...newKey, key: e.target.value})} />
-                             <select className="w-full bg-transparent border-none text-[10px] font-black uppercase outline-none text-white/60 cursor-pointer" value={newKey.provider} onChange={e=>setNewKey({...newKey, provider: e.target.value})}>
-                                <option value="nvidia">NVIDIA (Free)</option>
-                                <option value="openai">OpenAI</option>
-                                <option value="anthropic">Anthropic</option>
-                                <option value="google">Google</option>
-                             </select>
-                             <input placeholder="Model ID" className="w-full bg-transparent border-none text-[10px] font-bold outline-none placeholder:text-white/10 text-white" value={newKey.modelId} onChange={e=>setNewKey({...newKey, modelId: e.target.value})} />
-                             <button onClick={handleAddKey} className="w-full py-2 bg-white text-black text-[9px] font-black uppercase rounded-lg hover:scale-[1.02] active:scale-95 transition-all">Forge Dynamic Key</button>
+                             <button onClick={handleAddKey} className="w-full py-2 bg-white text-black text-[9px] font-black uppercase rounded-lg hover:scale-[1.02] active:scale-95 transition-all">Forge Universal Key</button>
                           </div>
                       </div>
 
@@ -431,7 +427,7 @@ export default function Workspace() {
                      { id: "explorer", icon: MessageSquare, action: () => setViewMode("explorer") },
                      { id: "search", icon: Search, action: () => setViewMode("search") },
                      { id: "support", icon: Heart, action: () => { setIsSupportOpen(true); setIsSidebarOpen(false); } },
-                     { id: "config", icon: Settings, action: () => setViewMode("config") }
+                     { id: "settings", icon: Settings, action: () => { setIsSidebarOpen(false); router.push("/settings"); } }
                    ].map(item => (
                      <button key={item.id} onClick={item.action} className={`p-3 rounded-2xl flex flex-col items-center justify-center transition-all ${viewMode === item.id ? "bg-purple-500/10 text-purple-400" : "text-white/20 hover:text-white"}`}>
                         <item.icon className="w-5 h-5" />
@@ -530,43 +526,50 @@ export default function Workspace() {
                 )}
              </AnimatePresence>
 
-             {/* Messages Container 📱 */}
-             <div ref={chatScrollContainerRef} className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6 lg:space-y-8 no-scrollbar scroll-smooth flex flex-col pb-48">
-                {messages.length === 0 ? (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center opacity-10 py-20 px-10">
-                     <Cloud className="w-12 h-12 mb-4" />
-                     <div className="text-[10px] font-black uppercase tracking-[0.4em] mb-4">Neural Grid Offline</div>
-                     <p className="text-[9px] font-black uppercase tracking-widest leading-relaxed max-w-[200px]">Provide your own API keys in Settings to ignite the singularity engine.</p>
-                  </div>
-                ) : (
-                  <div className="flex-1" /> // Spacer for bottom-up alignment
-                )}
-                {messages.map((m, idx) => (
-                  <div key={m.id || idx} className={`flex flex-col gap-2 ${m.role === "user" ? "items-end" : "items-start"}`}>
-                     <div className={`max-w-[92%] px-5 py-4 rounded-[28px] text-[13.5px] leading-relaxed shadow-sm transition-all ${m.role === "user" ? "bg-white/5 text-white border border-white/5" : "bg-black/40 text-gray-200 border border-white/5 shadow-inner"}`}>
-                        {m.experimental_attachments?.[0] && <img src={m.experimental_attachments[0].url} className="w-full rounded-2xl mb-4" />}
-                        <div className="whitespace-pre-wrap font-medium">{m.role === "user" ? m.content : m.content.replace(/```tsx\n[\s\S]*?```/g, "🛠️ Building Modules...")}</div>
-                     </div>
-                  </div>
-                ))}
-             </div>
-
-             {/* Input Forge 🏹 */}
-             <div className="p-4 lg:p-6 pt-0 absolute bottom-0 left-0 w-full bg-gradient-to-t from-[#0b0b0d] via-[#0b0b0d] to-transparent z-50">
-                <form onSubmit={handleCustomSubmit} className="bg-[#18181b]/80 border border-white/10 rounded-[32px] p-2 flex flex-col focus-within:ring-4 focus-within:ring-purple-500/10 transition-all shadow-3xl backdrop-blur-3xl relative overflow-hidden group">
-                   <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-purple-500/20 to-transparent" />
-                   <textarea 
-                    className="w-full bg-transparent border-none focus:ring-0 outline-none resize-none px-4 py-3 text-[14px] min-h-[50px] max-h-40 font-medium placeholder:text-white/10 text-white"
-                    placeholder={isMobile ? "Say something..." : "Enter neural instruction..."} value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&(e.preventDefault(),handleCustomSubmit())}
-                   />
-                   <div className="flex items-center justify-between px-2 pb-1 transition-opacity group-focus-within:opacity-100">
-                      <div className="flex items-center gap-1">
-                        <button type="button" onClick={()=>fileInputRef.current?.click()} className="p-2.5 text-white/10 hover:text-white transition-all"><Paperclip className="w-4 h-4"/></button>
-                        {isMobile && <span className="text-[8px] font-black uppercase text-white/10 bg-white/5 px-2 py-1 rounded-full">{customKeys.find(k => k.id === selectedModel)?.name || "NO ENGINE"}</span>}
+             {/* Messages Container - Fixed layout: messages above, input pinned below */}
+             <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+               <div ref={chatScrollContainerRef} className="flex-1 overflow-y-auto px-4 pt-4 pb-4 space-y-4 no-scrollbar">
+                  {messages.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-center opacity-10 py-20 px-10">
+                       <Cloud className="w-12 h-12 mb-4" />
+                       <div className="text-[10px] font-black uppercase tracking-[0.4em] mb-4">Neural Grid Offline</div>
+                       <p className="text-[9px] font-black uppercase tracking-widest leading-relaxed max-w-[200px]">Add keys in Settings then start chatting.</p>
+                    </div>
+                  ) : messages.map((m, idx) => (
+                    <div key={m.id || idx} className={`flex flex-col gap-2 ${m.role === "user" ? "items-end" : "items-start"}`}>
+                       <div className={`max-w-[92%] sm:max-w-[85%] px-4 py-3 rounded-3xl text-[13.5px] leading-relaxed ${m.role === "user" ? "bg-white/8 text-white border border-white/10" : "bg-black/30 text-gray-200 border border-white/5"}`}>
+                          {m.experimental_attachments?.[0] && <img src={m.experimental_attachments[0].url} className="w-full rounded-2xl mb-3 max-h-64 object-cover" />}
+                          <div className="whitespace-pre-wrap font-medium break-words">{m.role === "user" ? m.content : m.content.replace(/```tsx\n[\s\S]*?```/g, "🛠️ Building Modules...")}</div>
+                       </div>
+                    </div>
+                  ))}
+                  {isLoading && (
+                    <div className="flex items-start gap-3">
+                      <div className="bg-black/30 border border-white/5 px-4 py-3 rounded-3xl flex items-center gap-2">
+                        <div className="flex gap-1"><span className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-bounce" style={{animationDelay:"0ms"}} /><span className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-bounce" style={{animationDelay:"150ms"}} /><span className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-bounce" style={{animationDelay:"300ms"}} /></div>
+                        <span className="text-[10px] text-white/30 uppercase font-black tracking-widest">Neural Processing</span>
                       </div>
-                      <button type="submit" disabled={isLoading||(!chatInput.trim()&&!selectedImage)||!selectedModel} className={`w-10 h-10 flex items-center justify-center rounded-2xl transition-all ${(!chatInput.trim()&&!selectedImage)||!selectedModel? "bg-white/5 text-white/5" : "bg-white text-black shadow-xl"}`}><Send className="w-3.5 h-3.5 rotate-[-90deg] translate-x-px"/></button>
-                   </div>
-                </form>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+               </div>
+
+               {/* Input Forge — pinned at bottom of flex column */}
+               <div className="shrink-0 p-3 lg:p-4 border-t border-white/5 bg-black/10">
+                  <form onSubmit={handleCustomSubmit} className="bg-[#18181b] border border-white/10 rounded-2xl p-2 flex flex-col focus-within:ring-2 focus-within:ring-purple-500/20 transition-all">
+                     <textarea 
+                      className="w-full bg-transparent border-none focus:ring-0 outline-none resize-none px-3 py-2 text-[14px] min-h-[44px] max-h-32 font-medium placeholder:text-white/20 text-white leading-snug"
+                      placeholder={isMobile ? "Say something..." : "Enter neural instruction..."} value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&(e.preventDefault(),handleCustomSubmit())}
+                     />
+                     <div className="flex items-center justify-between px-1 pb-1">
+                        <div className="flex items-center gap-2">
+                          <button type="button" onClick={()=>fileInputRef.current?.click()} className="p-2 text-white/20 hover:text-white transition-all rounded-lg hover:bg-white/5"><Paperclip className="w-4 h-4"/></button>
+                          <span className="text-[8px] font-black uppercase text-white/20 bg-white/5 px-2 py-1 rounded-full hidden sm:inline">{customKeys.find(k => k.id === selectedModel)?.name || "NO ENGINE"}</span>
+                        </div>
+                        <button type="submit" disabled={isLoading||(!chatInput.trim()&&!selectedImage)||!selectedModel} className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${(!chatInput.trim()&&!selectedImage)||!selectedModel? "bg-white/5 text-white/10 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-500 text-white shadow-lg"}`}><Send className="w-3.5 h-3.5 rotate-[-90deg] translate-x-px"/></button>
+                     </div>
+                  </form>
+               </div>
              </div>
           </motion.div>
         )}
