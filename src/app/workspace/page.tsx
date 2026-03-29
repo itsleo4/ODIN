@@ -111,11 +111,18 @@ export default function Workspace() {
 
 
   const handleAddKey = () => {
-    if (!newKey.name || !newKey.key) return;
-    const keyObj: CustomKey = { ...newKey, id: Math.random().toString(36), modelId: newKey.modelId || "openai:gpt-4o" };
+    if (!newKey.name.trim() || !newKey.key.trim()) return;
+    const keyObj: CustomKey = {
+      id: Math.random().toString(36).slice(2),
+      name: newKey.name.trim(),
+      key: newKey.key.trim(),
+      // Provider is optional — empty string means backend picks free-tier default
+      provider: newKey.provider.trim().toLowerCase(),
+      modelId: "", // Never hardcode a model — let route.ts pick the right free-tier default
+    };
     setCustomKeys([...customKeys, keyObj]);
     if (!selectedModel) setSelectedModel(keyObj.id);
-    setNewKey({ name: "", key: "", provider: "nvidia", modelId: "" });
+    setNewKey({ name: "", key: "", provider: "", modelId: "" });
   };
 
   const removeKey = (id: string) => {

@@ -1,110 +1,123 @@
-import { createOpenAI, openai } from "@ai-sdk/openai";
-import { createAnthropic, anthropic } from "@ai-sdk/anthropic";
-import { createGoogleGenerativeAI, google } from "@ai-sdk/google";
+import { createOpenAI } from "@ai-sdk/openai";
+import { createAnthropic } from "@ai-sdk/anthropic";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { streamText, convertToCoreMessages } from "ai";
 
-// ODIN V2.11: 'THE KEY FORGE' (DYNAMIC PROVIDER ADAPTER) 🌑👤🛡️🦾
+// ODIN V2.4: UNIVERSAL KEY FORGE — SMART FREE-TIER ROUTING 🏹
 export async function POST(req: Request) {
   try {
     const { messages, model } = await req.json();
-    
-    // 1. EXTRACT CUSTOM CREDENTIALS (THE KEY FORGE 🏹)
+
+    // 1. EXTRACT CUSTOM CREDENTIALS
     const customKey = req.headers.get("x-custom-key");
-    const customProvider = req.headers.get("x-custom-provider");
-    const customModel = req.headers.get("x-custom-model");
+    const customProvider = req.headers.get("x-custom-provider") || "";
+    // Strip any provider prefix from model (e.g. "openai:gpt-4o" → "gpt-4o")
+    const rawCustomModel = req.headers.get("x-custom-model") || "";
+    const customModel = rawCustomModel.includes(":") 
+      ? rawCustomModel.split(":").slice(1).join(":") 
+      : rawCustomModel;
 
-    // 2. PROVIDER DETECTION
-    let provider: any = openai; 
-    let modelId = model || "gpt-4o";
-
-    // 3. OVERRIDE WITH CUSTOM KEYS IF PRESENT (UNIVERSAL NEURAL ROUTER 🏹)
-    if (customKey && customProvider) {
-       const lowerProvider = customProvider.toLowerCase();
-       
-       if (lowerProvider === "openai") {
-          provider = createOpenAI({ apiKey: customKey });
-          modelId = customModel || "gpt-4o";
-       } else if (lowerProvider === "anthropic") {
-          provider = createAnthropic({ apiKey: customKey });
-          modelId = customModel || "claude-3-5-sonnet-20240620";
-       } else if (lowerProvider === "google") {
-          provider = createGoogleGenerativeAI({ apiKey: customKey });
-          modelId = customModel || "gemini-1.5-pro";
-       } else if (lowerProvider === "nvidia" || lowerProvider === "nvidia-nim") {
-          provider = createOpenAI({ apiKey: customKey, baseURL: "https://integrate.api.nvidia.com/v1" });
-          modelId = customModel || "qwen/qwen3-coder-480b-a35b-instruct";
-       } else if (lowerProvider === "groq") {
-          provider = createOpenAI({ apiKey: customKey, baseURL: "https://api.groq.com/openai/v1" });
-          modelId = customModel || "llama3-70b-8192";
-       } else if (lowerProvider === "deepseek") {
-          provider = createOpenAI({ apiKey: customKey, baseURL: "https://api.deepseek.com" });
-          modelId = customModel || "deepseek-coder";
-       } else {
-          // UNIVERSAL OPENAI-COMPATIBLE FALLBACK 🌐
-          // Treat the provider name as the modelId and use OpenAI format
-          provider = createOpenAI({ apiKey: customKey });
-          modelId = customProvider; // Use the actual name provided as the model
-       }
-    } else {
-       // STANDARD ENV-BASED ROUTING
-       if (model.startsWith("anthropic:")) {
-         provider = anthropic;
-         modelId = model.replace("anthropic:", "");
-       } else if (model.startsWith("google:")) {
-         provider = google;
-         modelId = model.replace("google:", "");
-       } else if (model.startsWith("openai:")) {
-         provider = openai;
-         modelId = model.replace("openai:", "");
-       } else if (model.startsWith("ollama:")) {
-           return handleOllama(messages, model.replace("ollama:", ""));
-       } else if (model.startsWith("nvidia:")) {
-           return handleNvidia(messages, model.replace("nvidia:", ""));
-       }
+    if (!customKey) {
+      return new Response(
+        `0:"⚠️ No API key found. Go to Settings → API Keys and add your key first."\n`,
+        { headers: { "Content-Type": "text/plain" } }
+      );
     }
 
-    // 4. CONVERT & STREAM
+    // 2. SMART PROVIDER ROUTING — free-tier defaults
+    const lp = customProvider.toLowerCase().trim();
+    let provider: any;
+    let modelId: string;
+
+    if (lp === "openai" || lp === "") {
+      // OpenAI: free tier = gpt-4o-mini, paid = gpt-4o
+      provider = createOpenAI({ apiKey: customKey });
+      modelId = customModel || "gpt-4o-mini";
+
+    } else if (lp === "anthropic") {
+      provider = createAnthropic({ apiKey: customKey });
+      // Free/cheapest: claude-haiku. Paid: claude-3-5-sonnet
+      modelId = customModel || "claude-3-haiku-20240307";
+
+    } else if (lp === "google") {
+      provider = createGoogleGenerativeAI({ apiKey: customKey });
+      // Free tier: gemini-1.5-flash. Paid: gemini-1.5-pro
+      modelId = customModel || "gemini-1.5-flash";
+
+    } else if (lp === "nvidia" || lp === "nvidia-nim") {
+      provider = createOpenAI({
+        apiKey: customKey,
+        baseURL: "https://integrate.api.nvidia.com/v1",
+      });
+      // NVIDIA free tier — qwen3-235b is smaller and free
+      modelId = customModel || "qwen/qwen3-235b-a22b-instruct";
+
+    } else if (lp === "groq") {
+      provider = createOpenAI({
+        apiKey: customKey,
+        baseURL: "https://api.groq.com/openai/v1",
+      });
+      // Groq free tier — fastest free model
+      modelId = customModel || "llama3-8b-8192";
+
+    } else if (lp === "deepseek") {
+      provider = createOpenAI({
+        apiKey: customKey,
+        baseURL: "https://api.deepseek.com/v1",
+      });
+      // DeepSeek cheapest/free model
+      modelId = customModel || "deepseek-chat";
+
+    } else if (lp === "together" || lp === "togetherai") {
+      provider = createOpenAI({
+        apiKey: customKey,
+        baseURL: "https://api.together.xyz/v1",
+      });
+      modelId = customModel || "mistralai/Mixtral-8x7B-Instruct-v0.1";
+
+    } else if (lp === "mistral") {
+      provider = createOpenAI({
+        apiKey: customKey,
+        baseURL: "https://api.mistral.ai/v1",
+      });
+      modelId = customModel || "mistral-small-latest";
+
+    } else {
+      // UNIVERSAL FALLBACK: treat as OpenAI-compatible
+      // Provider name might be a base URL or unknown service
+      const baseURL = lp.startsWith("http") ? lp : undefined;
+      provider = createOpenAI({ apiKey: customKey, baseURL });
+      // Use the provider as the model name if it looks like one, else default
+      modelId = customModel || (baseURL ? "gpt-4o-mini" : lp);
+    }
+
+    // 3. STREAM
     const result = await streamText({
       model: provider(modelId),
       messages: convertToCoreMessages(messages),
-      system: "You are ODIN, an elite Agentic AI Architect. Code only in TSX blocks. Specify filenames like: [FILE: App.tsx]."
+      system:
+        "You are ODIN, an elite AI assistant and code architect. When writing code, wrap files like: [FILE: App.tsx]\n```tsx\n...\n```",
     });
 
     return result.toDataStreamResponse();
 
   } catch (error: any) {
     console.error("[ODIN] Neural Error:", error);
-    return new Response(`0:"⚠️ NEURAL ERROR: ${error.message}"\n`, { headers: { "Content-Type": "text/plain" } });
+
+    // Give the user a readable error in the chat
+    const msg = error?.message || "Unknown error";
+    const friendly = msg.includes("does not exist")
+      ? `⚠️ Model not found. Your plan may not support this model. Try a free-tier model. (${msg})`
+      : msg.includes("Incorrect API key") || msg.includes("401")
+      ? "⚠️ Invalid API key. Double-check the key in Settings."
+      : msg.includes("429") || msg.includes("rate limit")
+      ? "⚠️ Rate limit hit. Wait a moment and try again."
+      : msg.includes("quota") || msg.includes("billing")
+      ? "⚠️ Usage quota exceeded. Check your API plan billing."
+      : `⚠️ NEURAL ERROR: ${msg}`;
+
+    return new Response(`0:${JSON.stringify(friendly)}\n`, {
+      headers: { "Content-Type": "text/plain" },
+    });
   }
-}
-
-// OLLAMA LOCAL ADAPTER (🏠)
-async function handleOllama(messages: any[], model: string) {
-    const url = process.env.OLLAMA_BASE_URL || "http://localhost:11434/api/chat";
-    const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            model: model,
-            messages: messages.map(m => ({ role: m.role, content: m.content })),
-            stream: true
-        })
-    });
-    return new Response(response.body);
-}
-
-// NVIDIA NIM ADAPTER (🛡️)
-async function handleNvidia(messages: any[], model: string) {
-    const apiKey = process.env.STEP_3_5_FLASH || ""; 
-    const url = "https://integrate.api.nvidia.com/v1/chat/completions";
-    const response = await fetch(url, {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-            model: model === "qwin" ? "qwen/qwen3-coder-480b-a35b-instruct" : model,
-            messages: [{ role: "system", content: "You are ODIN AI Agent. Use [FILE: name.tsx] format." }, ...messages],
-            stream: true
-        })
-    });
-    return new Response(response.body);
 }

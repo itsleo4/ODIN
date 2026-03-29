@@ -54,8 +54,10 @@ export default function SettingsPage() {
     const keyObj: CustomKey = {
       ...newKey,
       id: Math.random().toString(36).slice(2),
-      provider: newKey.provider.trim().toLowerCase() || "openai",
-      modelId: ""
+      name: newKey.name.trim(),
+      key: newKey.key.trim(),
+      provider: newKey.provider.trim().toLowerCase(),
+      modelId: "", // Backend picks free-tier default based on provider
     };
     const updated = [...customKeys, keyObj];
     setCustomKeys(updated);
@@ -166,20 +168,23 @@ export default function SettingsPage() {
 
               {/* Provider Quick Guide */}
               <div className={`rounded-2xl border p-4 ${activeTheme === "light" ? "border-gray-200 bg-gray-50" : "border-white/5 bg-white/2"}`}>
-                <div className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-3">Quick Provider Guide</div>
+                <div className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-3">Provider → Free Model Used Automatically</div>
                 {[
-                  { provider: "nvidia", desc: "Free tier - qwen3-coder-480b (recommended)", color: "text-green-400" },
-                  { provider: "groq", desc: "Free tier - llama3-70b-8192 (fast)", color: "text-yellow-400" },
-                  { provider: "deepseek", desc: "Free/Paid - deepseek-coder", color: "text-blue-400" },
-                  { provider: "openai", desc: "Paid - gpt-4o (default)", color: "text-emerald-400" },
-                  { provider: "anthropic", desc: "Paid - claude-3-5-sonnet", color: "text-orange-400" },
-                  { provider: "google", desc: "Paid - gemini-1.5-pro", color: "text-cyan-400" },
+                  { provider: "nvidia", desc: "qwen3-235b (free) — great for code", color: "text-green-400" },
+                  { provider: "groq", desc: "llama3-8b (free, very fast)", color: "text-yellow-400" },
+                  { provider: "deepseek", desc: "deepseek-chat (free tier)", color: "text-blue-400" },
+                  { provider: "openai", desc: "gpt-4o-mini (free tier)", color: "text-emerald-400" },
+                  { provider: "google", desc: "gemini-1.5-flash (free tier)", color: "text-cyan-400" },
+                  { provider: "anthropic", desc: "claude-3-haiku (cheapest)", color: "text-orange-400" },
+                  { provider: "mistral", desc: "mistral-small-latest (free)", color: "text-pink-400" },
+                  { provider: "(leave blank)", desc: "auto-detects as OpenAI → gpt-4o-mini", color: "text-white/20" },
                 ].map(p => (
-                  <div key={p.provider} className="flex items-center gap-3 py-1.5">
-                    <span className={`text-[10px] font-black uppercase tracking-widest w-20 shrink-0 ${p.color}`}>{p.provider}</span>
+                  <div key={p.provider} className="flex items-start gap-3 py-1.5 border-b border-white/3 last:border-0">
+                    <span className={`text-[10px] font-black uppercase tracking-widest w-24 shrink-0 ${p.color}`}>{p.provider}</span>
                     <span className="text-[10px] text-white/30 font-medium">{p.desc}</span>
                   </div>
                 ))}
+                <p className="mt-3 text-[9px] text-white/20 font-medium leading-relaxed">Provider name is optional. If left blank, ODIN uses OpenAI format automatically.</p>
               </div>
 
               {/* Saved Keys */}
