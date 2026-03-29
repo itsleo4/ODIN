@@ -10,7 +10,7 @@ import {
   Terminal, Activity, Cpu, Layers, FileCode, Folder, Hash, Image, Save,
   FolderOpen, Maximize2, Minimize2, Play, Eraser, CheckCircle2, AlertCircle,
   Search, GitBranch, Globe, ChevronRight, ChevronDown, Check, MoreHorizontal,
-  Cloud, Zap, Home, Key, Smartphone, Monitor, ShieldCheck, Lock
+  Cloud, Zap, Home, Key, Smartphone, Monitor, ShieldCheck, Lock, Menu
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
@@ -94,6 +94,7 @@ export default function Workspace() {
        const isMob = window.innerWidth < 1024;
        setIsMobile(isMob);
        if (isMob) { setIsSidebarOpen(false); setIsRightSidebarOpen(true); }
+       else { setIsSidebarOpen(true); }
     };
     checkMobile();
     window.addEventListener("resize", checkMobile);
@@ -316,98 +317,130 @@ export default function Workspace() {
          </div>
       </div>
 
-      {/* B. SIDEBAR (HIDDEN ON MOBILE) */}
-      <AnimatePresence>
-        {isSidebarOpen && !isMobile && (
-          <motion.div initial={{ width: 0 }} animate={{ width: 280 }} exit={{ width: 0 }} className="h-full border-r border-white/5 bg-black/10 flex-col flex shrink-0">
-            <div className="h-10 border-b border-white/5 flex items-center justify-between px-4">
-               <span className="text-[10px] font-black uppercase text-white/30 tracking-widest">{viewMode}</span>
-               <button onClick={() => setIsSidebarOpen(false)} className="p-1 text-white/20 hover:text-white"><PanelLeftClose className="w-4 h-4" /></button>
-            </div>
+      {/* B. SIDEBAR (MOBILE SLIDE-IN OR DESKTOP STATIC) */}
+      <AnimatePresence mode="wait">
+        {isSidebarOpen && (
+          <>
+            {/* Mobile Backdrop */}
+            {isMobile && (
+              <motion.div 
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
+                onClick={() => setIsSidebarOpen(false)}
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[300]"
+              />
+            )}
+            
+            <motion.div 
+              initial={isMobile ? { x: -300 } : { width: 0 }} 
+              animate={isMobile ? { x: 0 } : { width: 280 }} 
+              exit={isMobile ? { x: -300 } : { width: 0 }} 
+              className={`h-full border-r border-white/5 bg-[#09090b] flex-col flex shrink-0 z-[400] ${isMobile ? "fixed left-0 top-0 shadow-3xl" : "relative border-r border-white/5"}`}
+            >
+              <div className="h-14 border-b border-white/5 flex items-center justify-between px-6 bg-black/20">
+                 <span className="text-[10px] font-black uppercase text-white tracking-widest">{viewMode}</span>
+                 <button onClick={() => setIsSidebarOpen(false)} className="p-2 text-white/20 hover:text-white transition-all"><PanelLeftClose className="w-5 h-5" /></button>
+              </div>
 
-            <div className="flex-1 overflow-y-auto no-scrollbar p-2">
-               {viewMode === "explorer" && (
-                 <div className="space-y-4">
-                    <div className="flex items-center justify-between px-2 text-[10px] font-black text-white/40 uppercase tracking-widest">Neural Streams <Plus onClick={() => { setActiveChatId(null); setMessages([]); }} className="w-3.5 h-3.5 cursor-pointer hover:text-white" /></div>
-                    <div className="space-y-0.5">
-                       {conversations.filter(c => showArchived ? c.is_archived : !c.is_archived).map(c => (
-                         <div key={c.id} className="relative group">
-                            <button 
-                              onClick={() => loadChat(c.id)}
-                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-[11.5px] font-bold transition-all ${activeChatId === c.id ? "bg-purple-500/10 text-purple-400" : "text-white/40 hover:bg-white/5 hover:text-white"}`}
-                            >
-                               {c.is_pinned ? <Pin className="w-3 h-3 text-purple-500" /> : <MessageSquare className="w-3 h-3 opacity-30" />}
-                               <span className="truncate flex-1 text-left font-black tracking-tight">{c.title}</span>
-                               <MoreHorizontal onClick={(e)=>{e.stopPropagation(); setActiveMenuId(activeMenuId === c.id ? null : c.id);}} className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 hover:text-white cursor-pointer" />
-                            </button>
-                            {activeMenuId === c.id && (
-                               <div className="absolute right-2 top-8 w-36 bg-[#18181b] border border-white/10 rounded-xl shadow-2xl p-1 z-[300]">
-                                  {[
-                                    { l: c.is_pinned?"Unpin":"Pin", i: Pin, a: "pin" },
-                                    { l: "Rename", i: Pencil, a: "rename" },
-                                    { l: c.is_archived?"Restore":"Archive", i: Archive, a: "archive" },
-                                    { l: "Delete", i: Trash2, a: "delete", c: "text-red-500" }
-                                  ].map(opt => (
-                                    <button onClick={()=>handleChatAction(c.id, opt.a as any)} className={`w-full text-left px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-white/5 transition-all ${opt.c||"text-white/60"}`}>
-                                       <opt.i className="w-3 h-3" /> {opt.l}
-                                    </button>
-                                  ))}
+              <div className="flex-1 overflow-y-auto no-scrollbar p-3">
+                 {viewMode === "explorer" ? (
+                   <div className="space-y-4">
+                      <div className="flex items-center justify-between px-3 text-[10px] font-black text-purple-500/60 uppercase tracking-widest">Neural Streams <Plus onClick={() => { setActiveChatId(null); setMessages([]); if(isMobile) setIsSidebarOpen(false); }} className="w-4 h-4 cursor-pointer hover:text-white transition-all" /></div>
+                      <div className="space-y-1">
+                         {conversations.filter(c => showArchived ? c.is_archived : !c.is_archived).map(c => (
+                           <div key={c.id} className="relative group">
+                              <button 
+                                onClick={() => { loadChat(c.id); if(isMobile) setIsSidebarOpen(false); }}
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-[12px] font-bold transition-all ${activeChatId === c.id ? "bg-purple-500/10 text-purple-400" : "text-white/40 hover:bg-white/5 hover:text-white"}`}
+                              >
+                                 {c.is_pinned ? <Pin className="w-3.5 h-3.5 text-purple-500" /> : <MessageSquare className="w-3.5 h-3.5 opacity-30" />}
+                                 <span className="truncate flex-1 text-left font-black tracking-tight">{c.title}</span>
+                                 <MoreHorizontal onClick={(e)=>{e.stopPropagation(); setActiveMenuId(activeMenuId === c.id ? null : c.id);}} className="w-4 h-4 opacity-0 group-hover:opacity-100 hover:text-white cursor-pointer" />
+                              </button>
+                              {activeMenuId === c.id && (
+                                 <div className="absolute right-2 top-8 w-36 bg-[#18181b] border border-white/10 rounded-xl shadow-2xl p-1 z-[300]">
+                                    {[
+                                      { l: c.is_pinned?"Unpin":"Pin", i: Pin, a: "pin" },
+                                      { l: "Rename", i: Pencil, a: "rename" },
+                                      { l: c.is_archived?"Restore":"Archive", i: Archive, a: "archive" },
+                                      { l: "Delete", i: Trash2, a: "delete", c: "text-red-500" }
+                                    ].map(opt => (
+                                      <button key={opt.a} onClick={()=>handleChatAction(c.id, opt.a as any)} className={`w-full text-left px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-white/5 transition-all ${opt.c||"text-white/60"}`}>
+                                         <opt.i className="w-3 h-3" /> {opt.l}
+                                      </button>
+                                    ))}
+                                 </div>
+                              )}
+                           </div>
+                         ))}
+                         {conversations.length === 0 && <div className="p-4 text-center text-[10px] font-black uppercase text-white/10 tracking-[0.3em]">No streams found</div>}
+                      </div>
+                   </div>
+                 ) : viewMode === "config" ? (
+                   <div className="p-4 space-y-8">
+                      {/* KEY FORGE Expansion */}
+                      <div>
+                          <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mb-4 flex items-center gap-2"><Key className="w-3 h-3" /> The Key Forge</div>
+                          <div className="space-y-2 mb-4">
+                             {customKeys.map(k => (
+                               <div key={k.id} className="flex items-center justify-between p-3 bg-white/5 border border-white/5 rounded-xl group transition-all hover:border-purple-500/20">
+                                  <span className="text-[10px] font-black uppercase text-white/60 truncate max-w-[120px]">{k.name}</span>
+                                  <Trash2 onClick={() => removeKey(k.id)} className="w-3.5 h-3.5 text-red-500/40 hover:text-red-500 cursor-pointer transition-all" />
                                </div>
-                            )}
-                         </div>
-                       ))}
-                       {conversations.length === 0 && <div className="p-4 text-center text-[10px] font-black uppercase text-white/10 tracking-[0.3em]">No streams found</div>}
-                    </div>
-                 </div>
-               )}
+                             ))}
+                             {customKeys.length === 0 && <div className="text-[9px] font-black uppercase text-purple-500/40 italic px-2">Forge empty. Add keys below 🏹</div>}
+                          </div>
+                          <div className="bg-black/40 p-3 rounded-2xl border border-white/5 space-y-3">
+                             <input placeholder="Personal Name" className="w-full bg-transparent border-none text-[10px] font-bold outline-none placeholder:text-white/10 text-white" value={newKey.name} onChange={e=>setNewKey({...newKey, name: e.target.value})} />
+                             <input placeholder="API Key" className="w-full bg-transparent border-none text-[10px] font-bold outline-none placeholder:text-white/10 text-white" type="password" value={newKey.key} onChange={e=>setNewKey({...newKey, key: e.target.value})} />
+                             <select className="w-full bg-transparent border-none text-[10px] font-black uppercase outline-none text-white/60 cursor-pointer" value={newKey.provider} onChange={e=>setNewKey({...newKey, provider: e.target.value})}>
+                                <option value="nvidia">NVIDIA (Free)</option>
+                                <option value="openai">OpenAI</option>
+                                <option value="anthropic">Anthropic</option>
+                                <option value="google">Google</option>
+                             </select>
+                             <input placeholder="Model ID" className="w-full bg-transparent border-none text-[10px] font-bold outline-none placeholder:text-white/10 text-white" value={newKey.modelId} onChange={e=>setNewKey({...newKey, modelId: e.target.value})} />
+                             <button onClick={handleAddKey} className="w-full py-2 bg-white text-black text-[9px] font-black uppercase rounded-lg hover:scale-[1.02] active:scale-95 transition-all">Forge Dynamic Key</button>
+                          </div>
+                      </div>
 
-               {viewMode === "config" && (
-                 <div className="p-4 space-y-8">
-                    {/* KEY FORGE Expansion */}
-                    <div>
-                        <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mb-4 flex items-center gap-2"><Key className="w-3 h-3" /> The Key Forge</div>
-                        <div className="space-y-2 mb-4">
-                           {customKeys.map(k => (
-                             <div key={k.id} className="flex items-center justify-between p-3 bg-white/5 border border-white/5 rounded-xl group transition-all hover:border-purple-500/20">
-                                <span className="text-[10px] font-black uppercase text-white/60 truncate max-w-[120px]">{k.name}</span>
-                                <Trash2 onClick={() => removeKey(k.id)} className="w-3.5 h-3.5 text-red-500/40 hover:text-red-500 cursor-pointer transition-all" />
-                             </div>
-                           ))}
-                           {customKeys.length === 0 && <div className="text-[9px] font-black uppercase text-purple-500/40 italic px-2">Forge empty. Add keys below 🏹</div>}
-                        </div>
-                        <div className="bg-black/40 p-3 rounded-2xl border border-white/5 space-y-3">
-                           <input placeholder="Personal Name (e.g. My Llama)" className="w-full bg-transparent border-none text-[10px] font-bold outline-none placeholder:text-white/10 text-white" value={newKey.name} onChange={e=>setNewKey({...newKey, name: e.target.value})} />
-                           <input placeholder="API Key" className="w-full bg-transparent border-none text-[10px] font-bold outline-none placeholder:text-white/10 text-white" type="password" value={newKey.key} onChange={e=>setNewKey({...newKey, key: e.target.value})} />
-                           <select className="w-full bg-transparent border-none text-[10px] font-black uppercase outline-none text-white/60 cursor-pointer" value={newKey.provider} onChange={e=>setNewKey({...newKey, provider: e.target.value})}>
-                              <option value="nvidia">NVIDIA (Free)</option>
-                              <option value="openai">OpenAI</option>
-                              <option value="anthropic">Anthropic</option>
-                              <option value="google">Google</option>
-                           </select>
-                           <input placeholder="Model ID (openai:gpt-4o)" className="w-full bg-transparent border-none text-[10px] font-bold outline-none placeholder:text-white/10 text-white" value={newKey.modelId} onChange={e=>setNewKey({...newKey, modelId: e.target.value})} />
-                           <button onClick={handleAddKey} className="w-full py-2 bg-white text-black text-[9px] font-black uppercase rounded-lg hover:scale-[1.02] active:scale-95 transition-all">Forge Dynamic Key</button>
-                        </div>
-                    </div>
+                      <div>
+                          <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mb-4">Neural Theme</div>
+                          <div className="grid grid-cols-1 gap-2">
+                              {[
+                                  { id: "dark", label: "Deep Zinc" },
+                                  { id: "midnight", label: "Midnight Blue" },
+                                  { id: "light", label: "Snow White" }
+                              ].map(t => (
+                                  <button key={t.id} onClick={() => setActiveTheme(t.id as any)} className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${activeTheme === t.id ? "border-purple-500 bg-purple-500/5 text-purple-400" : "border-white/5 bg-white/5 hover:bg-white/10 text-white/40"}`}>
+                                      <span className="text-[10px] font-bold uppercase tracking-widest">{t.label}</span>
+                                      {activeTheme === t.id && <Check className="w-3 h-3" />}
+                                  </button>
+                              ))}
+                          </div>
+                      </div>
+                   </div>
+                 ) : (
+                   <div className="p-8 text-center opacity-20 text-[10px] font-black uppercase tracking-[0.5em]">{viewMode} Mode Active</div>
+                 )}
+              </div>
 
-                    <div>
-                        <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mb-4">Neural Theme</div>
-                        <div className="grid grid-cols-1 gap-2">
-                            {[
-                                { id: "dark", label: "Deep Zinc", bg: "bg-zinc-900" },
-                                { id: "midnight", label: "Midnight Blue", bg: "bg-slate-950" },
-                                { id: "light", label: "Snow White", bg: "bg-white border text-black" }
-                            ].map(t => (
-                                <button key={t.id} onClick={() => setActiveTheme(t.id as any)} className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${activeTheme === t.id ? "border-purple-500 bg-purple-500/5 text-purple-400" : "border-white/5 bg-white/5 hover:bg-white/10 text-white/40"}`}>
-                                    <span className="text-[10px] font-bold uppercase tracking-widest">{t.label}</span>
-                                    {activeTheme === t.id && <Check className="w-3 h-3" />}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                 </div>
-               )}
-            </div>
-          </motion.div>
+              {/* Mobile Sidebar Footer (Social & Settings) */}
+              {isMobile && (
+                <div className="p-4 border-t border-white/5 grid grid-cols-4 gap-2 bg-black/20">
+                   {[
+                     { id: "explorer", icon: MessageSquare, action: () => setViewMode("explorer") },
+                     { id: "search", icon: Search, action: () => setViewMode("search") },
+                     { id: "support", icon: Heart, action: () => { setIsSupportOpen(true); setIsSidebarOpen(false); } },
+                     { id: "config", icon: Settings, action: () => setViewMode("config") }
+                   ].map(item => (
+                     <button key={item.id} onClick={item.action} className={`p-3 rounded-2xl flex flex-col items-center justify-center transition-all ${viewMode === item.id ? "bg-purple-500/10 text-purple-400" : "text-white/20 hover:text-white"}`}>
+                        <item.icon className="w-5 h-5" />
+                     </button>
+                   ))}
+                </div>
+              )}
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 
@@ -451,19 +484,24 @@ export default function Workspace() {
           <motion.div initial={{ width: 0 }} animate={{ width: isMobile ? "100%" : 420 }} exit={{ width: 0 }} className="h-full border-l border-white/5 bg-black/20 flex flex-col shrink-0 relative overflow-hidden">
              {/* Header */}
              <div className="h-14 border-b border-white/5 flex items-center justify-between px-6 bg-black/20 shrink-0 z-50">
-                <div className="flex flex-col">
-                   <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-white">{isMobile ? "Odin Assistant" : "Pure Singularity"}</span>
-                   </div>
-                   <div className="flex items-center gap-1 text-[8px] font-black text-purple-500/60 uppercase tracking-widest">
-                      <Lock className="w-2 h-2" /> Stored Locally
+                <div className="flex items-center gap-4">
+                   {isMobile && <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-white/40 hover:text-white transition-all"><Menu className="w-6 h-6" /></button>}
+                   <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                         <div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
+                         <span className="text-[10px] font-black uppercase tracking-widest text-white">{isMobile ? "Odin Assistant" : "Pure Singularity"}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-[8px] font-black text-purple-500/60 uppercase tracking-widest">
+                         <Lock className="w-2 h-2" /> Stored Locally
+                      </div>
                    </div>
                 </div>
-                {isMobile && <button onClick={() => setIsSupportOpen(true)} className="p-2 bg-white/5 rounded-xl text-purple-400 group"><Heart className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" /></button>}
-                <button onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)} className="bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg border border-white/10 text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 text-white">
-                  {customKeys.find(k => k.id === selectedModel)?.name.split(" ")[0] || "SELECT GEAR"} <ChevronDown className="w-3 h-3" />
-                </button>
+                <div className="flex items-center gap-3">
+                   {isMobile && <button onClick={() => setIsSupportOpen(true)} className="p-2 bg-white/5 rounded-xl text-purple-400 group"><Heart className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" /></button>}
+                   <button onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)} className="bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg border border-white/10 text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 text-white">
+                     {customKeys.find(k => k.id === selectedModel)?.name.split(" ")[0] || "SELECT GEAR"} <ChevronDown className="w-3 h-3" />
+                   </button>
+                </div>
              </div>
 
              {/* UNIVERSAL MODEL DROPDOWN */}
