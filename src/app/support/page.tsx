@@ -1,170 +1,134 @@
 "use client";
 
+import { X, QrCode, Heart, Coffee, Globe, Wallet, Mail, Copy, Check, ChevronLeft, Sparkles, Zap } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { ArrowLeft, Mail, Heart, Copy, Check, ExternalLink, HandCoins, DollarSign } from "lucide-react";
 import Link from "next/link";
 
-type SupportMethod = "upi" | "paypal" | "gmail";
-
 export default function SupportPage() {
-  const [activeTab, setActiveTab] = useState<SupportMethod>("upi");
-  const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState<"upi" | "paypal" | "gmail">("upi");
+  const [copied, setCopied] = useState<string | null>(null);
 
-  const methods = {
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(id);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const services = {
     upi: {
-      id: "UPI",
-      address: "bharti00077-2@okaxis",
-      qr: "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent("upi://pay?pa=bharti00077-2@okaxis"),
-      icon: <HandCoins className="w-4 h-4 text-emerald-400" />,
-      desc: "Instant bank transfer within India"
+      id: "7082103328@axl",
+      qr: "https://i.ibb.co/nqNg7nxK/upi-qr.png",
+      label: "UPI Payment",
+      color: "text-green-400",
+      bg: "bg-green-500/10",
+      desc: "Fastest way to support local development."
     },
     paypal: {
-      id: "PayPal",
-      address: "https://www.paypal.me/PawanKumar35438",
-      qr: "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent("https://www.paypal.me/PawanKumar35438"),
-      icon: <DollarSign className="w-4 h-4 text-blue-400" />,
-      desc: "Global international payments"
+      id: "nitinkumar-dev",
+      qr: "https://i.ibb.co/Q3yqK7Z4/paypal-qr.png",
+      label: "PayPal Global",
+      color: "text-blue-400",
+      bg: "bg-blue-500/10",
+      desc: "Ideal for international neural-grid funding."
     },
     gmail: {
-      id: "Gmail",
-      address: "bhart00077@gmail.com",
-      qr: "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent("mailto:bhart00077@gmail.com"),
-      icon: <Mail className="w-4 h-4 text-red-400" />,
-      desc: "Alternative via email scan"
+      id: "bhola.kumar.91.99@gmail.com",
+      qr: "https://i.ibb.co/B59vNtg3/gmail-qr.png",
+      label: "Direct Contact",
+      color: "text-red-400",
+      bg: "bg-red-500/10",
+      desc: "Drop a line for custom architecture."
     }
   };
 
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const activeData = methods[activeTab];
-
   return (
-    <div className="min-h-screen bg-[#09090b] text-gray-200 flex flex-col font-sans selection:bg-purple-500/30 relative overflow-hidden">
-      {/* Background Orbs */}
-      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-indigo-600/10 rounded-full blur-[100px] pointer-events-none" />
+    <div className="min-h-screen w-full bg-[#09090b] text-white font-sans flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      {/* Background Neural Grid */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(168,85,247,0.1),transparent_50%)]" />
+      <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none" style={{ backgroundImage: "radial-gradient(#ffffff05 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
 
-      {/* Header */}
-      <div className="w-full max-w-5xl mx-auto p-6 flex justify-between items-center z-10 relative">
-        <Link href="/workspace" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors group px-2 py-2">
-          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-          <span className="font-medium tracking-wide">Return to Engine</span>
-        </Link>
-        <div className="flex items-center gap-2">
-          <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-400">ODIN</span>
-          <span className="text-xl drop-shadow-[0_0_8px_rgba(147,51,234,0.5)]">🫀</span>
-        </div>
-      </div>
+      <Link href="/workspace" className="absolute top-10 left-10 flex items-center gap-2 text-white/20 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest group px-4 py-2 border border-white/5 rounded-full bg-white/5 backdrop-blur-md">
+         <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Forge
+      </Link>
 
-      {/* Main Content */}
-      <div className="flex-1 flex items-center justify-center p-6 z-10 relative">
-        <div className="max-w-5xl w-full grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20 items-center">
-          
-          {/* Left Text Side */}
-          <div className="flex flex-col gap-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 w-fit">
-              <Heart className="w-4 h-4 text-purple-400 fill-purple-400 animate-pulse" />
-              <span className="text-sm font-bold tracking-wider text-purple-300 uppercase">Support the Dictatorship</span>
-            </div>
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10"
+      >
+         {/* Left: Branding & Sarcasm */}
+         <div className="flex flex-col items-start text-left">
+            <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-8 shadow-inner"><Heart className="w-6 h-6 text-purple-400 animate-pulse" /></div>
+            <h1 className="text-6xl font-black italic uppercase tracking-tighter leading-none mb-6">Support the <br/><span className="text-purple-500 underline decoration-4 underline-offset-8">Architect</span></h1>
             
-            <h1 className="text-4xl md:text-5xl font-black leading-[1.15] tracking-tight">
-              Fuel the future of <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">ODIN Agent.</span>
-            </h1>
-            
-            <p className="text-gray-400 text-lg max-w-md leading-relaxed font-medium">
-              ODIN is built entirely by a solo developer. By contributing, you help sustain server costs, integrate elite models, and continually expand our empire. 
-            </p>
-
-            {/* Method Selectors */}
-            <div className="flex flex-wrap gap-3 mt-4">
-              {(Object.keys(methods) as SupportMethod[]).map((key) => {
-                const isActive = activeTab === key;
-                return (
-                  <button
-                    key={key}
-                    onClick={() => setActiveTab(key)}
-                    className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold transition-all duration-300 ${
-                      isActive 
-                        ? 'bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.2)] scale-105' 
-                        : 'bg-[#18181b] border border-[#27272a] text-gray-400 hover:bg-[#27272a] hover:text-white'
-                    }`}
-                  >
-                    {methods[key].icon}
-                    {methods[key].id}
-                  </button>
-                )
-              })}
-            </div>
-            
-            <p className="text-[11px] text-gray-500 font-medium uppercase tracking-wider mt-4">
-              * Note: If UPI does not work internationally, <br/> please consider using PayPal or Gmail.
-            </p>
-          </div>
-
-          {/* Right QR Card Side */}
-          <div className="bg-[#18181b]/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-[0_0_50px_rgba(0,0,0,0.5)] transform transition-all duration-500 hover:border-purple-500/30 flex flex-col items-center text-center">
-            
-            <h2 className="text-2xl font-black text-white mb-2">{activeData.id} Transfer</h2>
-            <p className="text-gray-400 text-sm font-medium mb-8">{activeData.desc}</p>
-            
-            {/* QR Code Frame */}
-            <div className="w-64 h-64 bg-white rounded-2xl p-4 flex items-center justify-center mb-8 relative group">
-              <div className="absolute inset-0 bg-gradient-to-tr from-purple-500 to-indigo-500 opacity-20 blur-xl group-hover:opacity-40 transition-opacity -z-10 rounded-full" />
-              
-              {/* Dynamic Image logic API rendering */}
-              <div className="w-full h-full border-2 border-dashed border-gray-100 rounded-xl flex items-center justify-center relative overflow-hidden bg-white hover:border-purple-300 transition-colors">
-                 <img 
-                    src={activeData.qr} 
-                    alt={`${activeData.id} Dynamic QR API`}
-                    className="w-full h-full object-contain absolute inset-0 z-10 mix-blend-multiply opacity-0 animate-in fade-in duration-500 fill-mode-forwards"
-                    style={{ animationDelay: '200ms' }}
-                 />
-                 {/* Loading spinner behind image */}
-                 <div className="flex flex-col items-center justify-center absolute inset-0 text-gray-400">
-                    <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest">Generating QR</span>
-                 </div>
-              </div>
-            </div>
-
-            {/* Address Click-to-Copy Area */}
-            <div className="w-full bg-[#09090b] border border-[#27272a] rounded-xl p-4 flex items-center justify-between group/copy relative overflow-hidden">
-               <div className="absolute inset-0 bg-purple-500/5 opacity-0 group-hover/copy:opacity-100 transition-opacity" />
-               <div className="flex flex-col items-start gap-1 relative z-10 overflow-hidden w-full pr-4">
-                 <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest">{activeData.id} Routing Address</span>
-                 {activeTab === 'paypal' ? (
-                   <a href={activeData.address} target="_blank" rel="noreferrer" className="text-blue-400 hover:text-blue-300 font-mono text-sm sm:text-base truncate w-full text-left inline-flex items-center gap-2 transition-colors">
-                     {activeData.address.replace('https://', '')}
-                     <ExternalLink className="w-3 h-3" />
-                   </a>
-                 ) : (
-                   <span className="text-gray-200 font-mono text-sm sm:text-base truncate w-full text-left font-bold tracking-tight">
-                     {activeData.address}
-                   </span>
-                 )}
+            <div className="flex items-center gap-4 mb-10">
+               <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Lead Dev: Nitin Kumar</div>
+               <div className="flex -space-x-2">
+                  {[1,2,3].map(i => <div key={i} className="w-8 h-8 rounded-full border-2 border-[#09090b] bg-gray-800 flex items-center justify-center text-[10px] font-bold text-white/20">A{i}</div>)}
                </div>
-               
-               <button 
-                 onClick={() => handleCopy(activeData.address)}
-                 className="w-10 h-10 shrink-0 bg-[#27272a] hover:bg-white hover:text-black rounded-lg flex items-center justify-center transition-colors relative z-10 ml-2"
-                 title="Copy to clipboard"
-               >
-                 {copied ? <Check className="w-5 h-5 text-emerald-500" /> : <Copy className="w-5 h-5" />}
-               </button>
-            </div>
-            
-            <div className="h-6 mt-3">
-              {copied && <p className="text-emerald-400 text-xs font-bold uppercase tracking-wider animate-in fade-in slide-in-from-bottom-1">Address Copied Base!</p>}
             </div>
 
-          </div>
-        </div>
-      </div>
+            <div className="relative p-8 bg-white/5 border border-white/10 rounded-[40px] shadow-2xl overflow-hidden group">
+               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><Sparkles className="w-12 h-12" /></div>
+               <p className="text-xl italic text-white/50 leading-relaxed font-medium">
+                "ODIN exists because **Nitin Kumar** was so legendarily lazy he taught AI to think for him so he could nap longer. Support his efficient lethargy before he decides your next feature request is 'socially exhausting' to implement."
+               </p>
+               <div className="mt-8 flex items-center gap-3 text-[10px] font-black text-purple-500/60 uppercase tracking-widest">
+                  <Zap className="w-4 h-4 fill-current" /> Forge Enterprise Support Grid V2.5
+               </div>
+            </div>
+         </div>
+
+         {/* Right: Donation Grid */}
+         <div className="bg-[#121214] border border-white/10 rounded-[56px] p-2 shadow-3xl">
+            <div className="bg-[#0b0b0d] rounded-[54px] p-10 flex flex-col items-center">
+               <div className="flex w-full gap-2 p-1 bg-black/40 rounded-3xl mb-10 border border-white/5">
+                  {(["upi", "paypal", "gmail"] as const).map(s => (
+                    <button 
+                     key={s} onClick={() => setActiveTab(s)}
+                     className={`flex-1 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === s ? "bg-white text-black shadow-xl scale-[1.02]" : "text-white/20 hover:text-white/40"}`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+               </div>
+
+               <AnimatePresence mode="wait">
+                  <motion.div 
+                    key={activeTab} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
+                    className="w-full flex flex-col items-center"
+                  >
+                     <div className="w-64 h-64 bg-white rounded-[40px] p-8 mb-10 shadow-[0_0_80px_rgba(168,85,247,0.15)] relative group overflow-hidden border-8 border-black">
+                        <img src={services[activeTab].qr} alt={activeTab} className="w-full h-full object-contain" />
+                        <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center p-6 text-center">
+                           <span className="text-[10px] font-black text-white uppercase tracking-widest">Secure scan with {activeTab} app</span>
+                        </div>
+                     </div>
+
+                     <div className="text-center mb-8">
+                        <h3 className="text-2xl font-black uppercase italic text-white mb-2">{services[activeTab].label}</h3>
+                        <p className="text-[10px] uppercase font-black tracking-widest text-white/30">{services[activeTab].desc}</p>
+                     </div>
+
+                     <div className={`w-full ${services[activeTab].bg} border border-white/5 rounded-3xl p-6 flex items-center justify-between gap-6`}>
+                        <div className="flex flex-col items-start min-w-0">
+                           <span className={`text-[9px] font-black uppercase tracking-widest ${services[activeTab].color} mb-1 opacity-60`}>Recipient Address</span>
+                           <span className="text-[13px] font-bold text-white tracking-tight truncate w-full">{services[activeTab].id}</span>
+                        </div>
+                        <button 
+                          onClick={() => copyToClipboard(services[activeTab].id, activeTab)}
+                          className="p-4 bg-white/5 hover:bg-white/10 rounded-2xl transition-all active:scale-90"
+                        >
+                           {copied === activeTab ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5 text-white/20" />}
+                        </button>
+                     </div>
+                  </motion.div>
+               </AnimatePresence>
+
+               <div className="mt-12 text-[10px] font-black text-white/10 uppercase tracking-[0.5em] text-center">Solo Dev Mode Active 🛡️🦾📂</div>
+            </div>
+         </div>
+      </motion.div>
     </div>
   );
 }
