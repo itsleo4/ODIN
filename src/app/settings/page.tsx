@@ -19,7 +19,7 @@ export default function SettingsPage() {
 
   const [activeTab, setActiveTab] = useState<"keys" | "theme" | "archive" | "account">("keys");
   const [customKeys, setCustomKeys] = useState<CustomKey[]>([]);
-  const [newKey, setNewKey] = useState({ name: "", provider: "", key: "" });
+  const [newKey, setNewKey] = useState({ name: "", provider: "", key: "", modelId: "" });
   const [activeTheme, setActiveTheme] = useState<"dark" | "midnight" | "light">("dark");
   const [archivedChats, setArchivedChats] = useState<Conversation[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -52,16 +52,16 @@ export default function SettingsPage() {
   const handleAddKey = () => {
     if (!newKey.name.trim() || !newKey.key.trim()) return;
     const keyObj: CustomKey = {
-      ...newKey,
       id: Math.random().toString(36).slice(2),
       name: newKey.name.trim(),
       key: newKey.key.trim(),
       provider: newKey.provider.trim().toLowerCase(),
-      modelId: "", // Backend picks free-tier default based on provider
+      // Save custom model ID if provided (e.g. "moonshotai/kimi-k2-thinking")
+      modelId: newKey.modelId.trim(),
     };
     const updated = [...customKeys, keyObj];
     setCustomKeys(updated);
-    setNewKey({ name: "", provider: "", key: "" });
+    setNewKey({ name: "", provider: "", key: "", modelId: "" });
     setKeyAdded(true);
     setTimeout(() => setKeyAdded(false), 2000);
   };
@@ -141,22 +141,28 @@ export default function SettingsPage() {
               <div className={`rounded-2xl border p-4 space-y-3 ${activeTheme === "light" ? "border-gray-200 bg-gray-50" : "border-white/8 bg-white/3"}`}>
                 <div className="text-[9px] font-black uppercase tracking-widest text-purple-500/80 mb-1">New Key</div>
                 <input
-                  placeholder="Give it a name (e.g. My Groq Key)"
+                  placeholder="Name (e.g. Kimi Thinking)"
                   className={`w-full rounded-xl px-4 py-3 text-[13px] font-medium outline-none border transition-all ${activeTheme === "light" ? "bg-white border-gray-200 text-gray-800 placeholder:text-gray-300" : "bg-black/20 border-white/8 text-white placeholder:text-white/20 focus:border-purple-500/40"}`}
                   value={newKey.name} onChange={e => setNewKey({ ...newKey, name: e.target.value })}
                 />
                 <input
-                  placeholder="Provider (nvidia, groq, openai, anthropic, deepseek…)"
+                  placeholder="Provider — nvidia, groq, openai, gemini… (optional)"
                   className={`w-full rounded-xl px-4 py-3 text-[13px] font-medium outline-none border transition-all ${activeTheme === "light" ? "bg-white border-gray-200 text-gray-800 placeholder:text-gray-300" : "bg-black/20 border-white/8 text-white placeholder:text-white/20 focus:border-purple-500/40"}`}
                   value={newKey.provider} onChange={e => setNewKey({ ...newKey, provider: e.target.value })}
                 />
                 <input
-                  placeholder="API Key (sk-...)"
+                  placeholder="API Key (nvapi-... / sk-... / AIza...)"
                   type="password"
                   className={`w-full rounded-xl px-4 py-3 text-[13px] font-medium outline-none border transition-all ${activeTheme === "light" ? "bg-white border-gray-200 text-gray-800 placeholder:text-gray-300" : "bg-black/20 border-white/8 text-white placeholder:text-white/20 focus:border-purple-500/40"}`}
                   value={newKey.key} onChange={e => setNewKey({ ...newKey, key: e.target.value })}
+                />
+                <input
+                  placeholder="Model ID — optional (e.g. moonshotai/kimi-k2-thinking)"
+                  className={`w-full rounded-xl px-4 py-3 text-[13px] font-medium outline-none border transition-all ${activeTheme === "light" ? "bg-white border-gray-200 text-gray-800 placeholder:text-gray-300" : "bg-black/20 border-white/8 text-white placeholder:text-white/20 focus:border-purple-500/40"}`}
+                  value={newKey.modelId} onChange={e => setNewKey({ ...newKey, modelId: e.target.value })}
                   onKeyDown={e => e.key === "Enter" && handleAddKey()}
                 />
+                <p className="text-[9px] text-white/20 font-medium px-1">Leave Model ID blank to use the free-tier default for your provider.</p>
                 <motion.button
                   onClick={handleAddKey}
                   whileTap={{ scale: 0.97 }}
@@ -168,23 +174,24 @@ export default function SettingsPage() {
 
               {/* Provider Quick Guide */}
               <div className={`rounded-2xl border p-4 ${activeTheme === "light" ? "border-gray-200 bg-gray-50" : "border-white/5 bg-white/2"}`}>
-                <div className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-3">Provider → Free Model Used Automatically</div>
+                <div className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-3">Provider Guide — Key Auto-Detection</div>
                 {[
-                  { provider: "nvidia", desc: "qwen3-235b (free) — great for code", color: "text-green-400" },
-                  { provider: "groq", desc: "llama3-8b (free, very fast)", color: "text-yellow-400" },
+                  { provider: "nvidia", desc: "nvapi-... key → NVIDIA NIM. Default: qwen3-235b", color: "text-green-400" },
+                  { provider: "groq", desc: "gsk_... key → Groq. Default: llama3-8b", color: "text-yellow-400" },
+                  { provider: "google/gemini", desc: "AIza... key → Google. Default: gemini-2.0-flash", color: "text-cyan-400" },
+                  { provider: "openai", desc: "sk-... key → OpenAI. Default: gpt-4o-mini", color: "text-emerald-400" },
+                  { provider: "anthropic", desc: "sk-ant-... key → Anthropic. Default: claude-3-haiku", color: "text-orange-400" },
                   { provider: "deepseek", desc: "deepseek-chat (free tier)", color: "text-blue-400" },
-                  { provider: "openai", desc: "gpt-4o-mini (free tier)", color: "text-emerald-400" },
-                  { provider: "google", desc: "gemini-1.5-flash (free tier)", color: "text-cyan-400" },
-                  { provider: "anthropic", desc: "claude-3-haiku (cheapest)", color: "text-orange-400" },
                   { provider: "mistral", desc: "mistral-small-latest (free)", color: "text-pink-400" },
-                  { provider: "(leave blank)", desc: "auto-detects as OpenAI → gpt-4o-mini", color: "text-white/20" },
                 ].map(p => (
                   <div key={p.provider} className="flex items-start gap-3 py-1.5 border-b border-white/3 last:border-0">
-                    <span className={`text-[10px] font-black uppercase tracking-widest w-24 shrink-0 ${p.color}`}>{p.provider}</span>
+                    <span className={`text-[10px] font-black uppercase tracking-widest w-28 shrink-0 ${p.color}`}>{p.provider}</span>
                     <span className="text-[10px] text-white/30 font-medium">{p.desc}</span>
                   </div>
                 ))}
-                <p className="mt-3 text-[9px] text-white/20 font-medium leading-relaxed">Provider name is optional. If left blank, ODIN uses OpenAI format automatically.</p>
+                <div className="mt-3 p-3 bg-purple-500/5 border border-purple-500/10 rounded-xl">
+                  <p className="text-[9px] text-purple-400/80 font-bold leading-relaxed">💡 NVIDIA keys (nvapi-) are auto-detected. For a specific NVIDIA model like <span className="font-black">moonshotai/kimi-k2-thinking</span>, add it in the Model ID field above.</p>
+                </div>
               </div>
 
               {/* Saved Keys */}
@@ -193,11 +200,12 @@ export default function SettingsPage() {
                   <div className="text-[9px] font-black uppercase tracking-widest text-white/30">Saved Keys ({customKeys.length})</div>
                   {customKeys.map(k => (
                     <motion.div key={k.id} layout className={`flex items-center justify-between px-4 py-3 rounded-2xl border ${activeTheme === "light" ? "border-gray-200 bg-white" : "border-white/8 bg-white/3"}`}>
-                      <div>
+                      <div className="min-w-0 pr-3">
                         <div className="text-[12px] font-black text-white">{k.name}</div>
-                        <div className="text-[9px] font-bold text-purple-500/60 uppercase tracking-widest">{k.provider}</div>
+                        <div className="text-[9px] font-bold text-purple-500/60 uppercase tracking-widest">{k.provider || "auto"}</div>
+                        {k.modelId && <div className="text-[9px] text-white/20 font-mono truncate">{k.modelId}</div>}
                       </div>
-                      <button onClick={() => removeKey(k.id)} className="p-2 text-red-500/40 hover:text-red-500 transition-all hover:bg-red-500/10 rounded-lg">
+                      <button onClick={() => removeKey(k.id)} className="shrink-0 p-2 text-red-500/40 hover:text-red-500 transition-all hover:bg-red-500/10 rounded-lg">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </motion.div>
