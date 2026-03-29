@@ -6,18 +6,21 @@ import {
   LogOut, Send, Code, MonitorPlay, PanelLeftClose, PanelLeft, 
   PanelRightClose, PanelRight, MessageSquare, Settings, Heart, X,
   Paperclip, Image as ImageIcon, ExternalLink, QrCode, Sparkles, Plus,
-  PauseCircle, Pencil, RotateCcw
+  PauseCircle, Pencil, RotateCcw, MoreVertical, Pin, Archive, Trash2,
+  Terminal, Activity, Cpu, Layers, FileCode, Folder, Hash, Image
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { SupportPanel } from "@/components/SupportPanel";
 import {
   SandpackProvider,
   SandpackCodeEditor,
   SandpackPreview,
   SandpackLayout,
+  SandpackFileExplorer
 } from "@codesandbox/sandpack-react";
 
 // ---------------- ELEGANT STARTUP ----------------
@@ -77,6 +80,14 @@ export default function Workspace() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [logs, setLogs] = useState<string[]>(["[SYS] Neural Grid Online.", "[SYS] Models Loaded: K2, Flash, 480B."]);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [activeFile, setActiveFile] = useState("/App.tsx");
+  const [projectFiles, setProjectFiles] = useState<Record<string, string>>({
+    "/App.tsx": defaultCode
+  });
 
   // Vision / Multimodal / Interrupt State
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -231,38 +242,106 @@ export default function Workspace() {
     sendMessage(msg); setChatInput(''); setSelectedImage(null);
   };
 
-  const latestCode = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].role === "assistant") {
-        const content = messages[i].content;
-        const match = content.match(/```tsx\n([\s\S]*?)```/);
-        if (match && match[1]) return match[1];
-        if (content.includes("```tsx")) { const s = content.split("```tsx\n")[1]; if (s) return s; }
-      }
+  // ADVANCED NEURAL MULTI-FILE EXTRACTOR
+  useEffect(() => {
+    const lastAssistantMessage = [...messages].reverse().find(m => m.role === "assistant");
+    if (lastAssistantMessage) {
+       const content = lastAssistantMessage.content;
+       const fileRegex = /\[FILE: (.*?)\]\n```tsx\n([\s\S]*?)```/g;
+       let match;
+       const newFiles: Record<string, string> = { ...projectFiles };
+       let foundAny = false;
+
+       while ((match = fileRegex.exec(content)) !== null) {
+          const fileName = match[1].startsWith('/') ? match[1] : `/${match[1]}`;
+          newFiles[fileName] = match[2];
+          foundAny = true;
+       }
+
+       if (!foundAny) {
+          const legacyMatch = content.match(/```tsx\n([\s\S]*?)```/);
+          if (legacyMatch && legacyMatch[1]) {
+             newFiles["/App.tsx"] = legacyMatch[1];
+             foundAny = true;
+          }
+       }
+
+       if (foundAny) setProjectFiles(newFiles);
     }
-    return defaultCode;
   }, [messages]);
+
+  const latestCode = projectFiles["/App.tsx"];
 
   return (
     <div className="h-screen w-full flex bg-[#09090b] text-gray-200 font-sans overflow-hidden">
       
+      <SupportPanel isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
+
       {/* 1. SIDEBAR */}
-      <div className={`transition-all duration-300 border-r border-white/5 bg-[#0b0b0e] flex flex-col shrink-0 z-20 ${isSidebarOpen ? 'w-[260px] opacity-100' : 'w-0 opacity-0 pointer-events-none'}`}>
-        <div className="p-4 w-[260px] flex-1 flex flex-col overflow-hidden">
+      <div className={`transition-all duration-300 border-r border-white/5 bg-[#0b0b0e] flex flex-col shrink-0 z-[100] ${isSidebarOpen ? 'w-[260px] opacity-100' : 'w-0 opacity-0 pointer-events-none'}`}>
+        <div className="p-4 w-[260px] flex-1 flex flex-col overflow-hidden relative">
            <div className="flex items-center gap-2 mb-4 mt-2 px-2">
               <span className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-400">ODIN</span>
               <a href="https://instagram.com/odincalm0" target="_blank" rel="noreferrer" className="text-xl">
                 <motion.div animate={isLoading ? { scale: [1, 1.2, 1], rotate: [0, 5, -5, 0] } : {}} transition={{ repeat: Infinity, duration: 1.5 }} className="drop-shadow-[0_0_10px_rgba(168,85,247,0.5)] cursor-pointer">🫀</motion.div>
               </a>
+              <div className="ml-auto flex items-center gap-2">
+                 <button className="p-2 text-gray-500 hover:text-white transition-all"><Settings className="w-4 h-4" /></button>
+              </div>
            </div>
-           <button onClick={handleNewChat} className="flex items-center gap-3 px-3 py-3 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all text-sm font-bold text-gray-200 mb-6 uppercase tracking-widest"><Plus className="w-4 h-4" /> New Chat</button>
-           <div className="flex-1 overflow-y-auto custom-scrollbar">
-              <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4 px-2 select-none">Recently Built</div>
+           
+           <button onClick={handleNewChat} className="flex items-center gap-3 px-3 py-3 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all text-[11px] font-black text-white/40 uppercase tracking-[0.3em] mb-6 overflow-hidden active:scale-95 group relative">
+              <span className="relative z-10 flex items-center gap-2"><Plus className="w-4 h-4" /> New Grid</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+           </button>
+
+           <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1">
+              <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4 px-2 select-none opacity-40 flex items-center justify-between">
+                 Neural History <span>{conversations.length}</span>
+              </div>
               {conversations.map((convo) => (
-                <button key={convo.id} onClick={() => loadChat(convo.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-xs text-left truncate group ${activeChatId === convo.id ? 'bg-purple-600/10 text-purple-300' : 'hover:bg-[#1a1a1f] text-gray-400'}`}>
-                  <MessageSquare className="w-3.5 h-3.5 shrink-0" /> <span className="truncate font-black uppercase">{convo.title}</span>
-                </button>
+                <div key={convo.id} className="group relative">
+                  <button 
+                    onClick={() => loadChat(convo.id)} 
+                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all text-[10px] tracking-widest text-left truncate relative ${activeChatId === convo.id ? 'bg-purple-600/10 text-purple-400 border border-purple-500/20' : 'hover:bg-white/5 text-gray-500 hover:text-gray-300'}`}
+                  >
+                    <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${activeChatId === convo.id ? 'text-purple-500 animate-pulse' : 'opacity-20'}`} /> 
+                    <span className="truncate font-black uppercase">{convo.title || "Neural Stream"}</span>
+                  </button>
+                  
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === convo.id ? null : convo.id); }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-700 hover:text-white opacity-0 group-hover:opacity-100 transition-all"
+                  >
+                    <MoreVertical className="w-4 h-4" />
+                  </button>
+
+                  <AnimatePresence>
+                    {activeMenuId === convo.id && (
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.9, x: -10 }} animate={{ opacity: 1, scale: 1, x: 0 }} exit={{ opacity: 0, scale: 0.9, x: -10 }}
+                        className="absolute left-full ml-2 top-0 w-32 bg-[#1c1c1f] border border-white/10 rounded-xl shadow-2xl p-1 z-[200] backdrop-blur-3xl"
+                      >
+                         <button className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/5 text-[9px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><Pin className="w-3 h-3" /> Pin</button>
+                         <button className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/5 text-[9px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><Archive className="w-3 h-3" /> Archive</button>
+                         <button className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-red-500/10 text-[9px] font-black text-red-500 uppercase tracking-widest flex items-center gap-2 border-t border-white/5 mt-1 pt-3"><Trash2 className="w-3 h-3" /> Delete</button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               ))}
+           </div>
+
+           <div className="mt-4 pt-4 border-t border-white/5 space-y-2">
+              <button 
+                onClick={() => setIsSupportOpen(true)}
+                className="w-full py-4 rounded-[20px] bg-white text-black text-[10px] font-black uppercase tracking-[0.2em] shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:scale-[1.03] active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                 <Heart className="w-4 h-4 text-purple-600 fill-purple-600" /> Support Nitin
+              </button>
+              <div className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] text-center pt-2 select-none group">
+                 Built By <span className="group-hover:text-purple-500 transition-colors cursor-help">Nitin Kumar</span> 🫀🦾
+              </div>
            </div>
         </div>
       </div>
@@ -353,11 +432,86 @@ export default function Workspace() {
                </div>
                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20"><div className="w-1 h-1 rounded-full bg-green-400 animate-pulse"/><span className="text-[9px] font-black text-green-400 uppercase tracking-widest">Active Compiler</span></div>
             </div>
-            <div className="flex-1 relative bg-white">
-              <SandpackProvider template="react-ts" theme="dark" files={{"/App.tsx":latestCode}} customSetup={{dependencies:{"lucide-react":"latest","framer-motion":"latest"}}} options={{classes:{"sp-wrapper":"h-full w-full","sp-layout":"h-full w-full !rounded-none !border-none",}}}>
-                <SandpackLayout className="h-full w-full flex !border-none">
-                   <div className={`h-full w-full bg-[#141417] ${activeTab==='code'?'block':'hidden'}`}><SandpackCodeEditor showTabs={true} showLineNumbers={true} className="h-full w-full" /></div>
-                   <div className={`h-full w-full relative bg-white border-none ${activeTab==='preview'?'block':'hidden'}`}><SandpackPreview showOpenInCodeSandbox={false} showRefreshButton={true} className="h-full w-full" /></div>
+            <div className="flex-1 relative bg-white flex flex-col min-h-0">
+              <SandpackProvider 
+                template="react-ts" 
+                theme="dark" 
+                files={projectFiles}
+                customSetup={{
+                  dependencies: {
+                    "lucide-react": "latest",
+                    "framer-motion": "latest",
+                    "clsx": "latest",
+                    "tailwind-merge": "latest"
+                  }
+                }} 
+                options={{
+                  classes: {
+                    "sp-wrapper": "h-full w-full",
+                    "sp-layout": "h-full w-full !rounded-none !border-none",
+                  }
+                }}
+              >
+                <SandpackLayout className="h-full w-full flex flex-col !border-none">
+                   <div className="h-10 border-b border-white/5 bg-[#0b0b0e] flex items-center px-4 gap-2 justify-between">
+                      <div className="flex items-center gap-4 overflow-x-auto no-scrollbar">
+                         {Object.keys(projectFiles).map(f => (
+                           <button 
+                             key={f} 
+                             onClick={() => setActiveFile(f)}
+                             className={`flex items-center gap-2 px-3 h-full border-b-2 text-[10px] font-black uppercase tracking-widest transition-all ${activeFile===f ? 'border-purple-500 text-white bg-white/5' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+                           >
+                             <FileCode className="w-3.5 h-3.5" /> {f.replace('/','')}
+                           </button>
+                         ))}
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                         <div className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest ${activeTab==='preview'?'bg-purple-500/10 text-purple-400 border border-purple-500/20':'text-gray-600'}`}>Mirror Link</div>
+                      </div>
+                   </div>
+
+                   <div className="flex-1 flex min-h-0">
+                      <div className={`w-48 bg-[#0b0b0e] border-r border-white/5 p-3 flex flex-col gap-1 overflow-y-auto no-scrollbar ${activeTab==='code' ? 'block' : 'hidden md:block'}`}>
+                         <div className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] mb-3 px-2">Project Root</div>
+                         {Object.keys(projectFiles).map(f => (
+                           <button 
+                             key={f} 
+                             onClick={() => setActiveFile(f)}
+                             className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] uppercase font-black tracking-widest transition-all ${activeFile===f ? 'bg-purple-600/10 text-purple-400' : 'text-gray-500 hover:bg-white/5'}`}
+                           >
+                             {f.endsWith('.css') ? <Hash className="w-3.5 h-3.5" /> : <FileCode className="w-3.5 h-3.5" />} {f.replace('/','')}
+                           </button>
+                         ))}
+                         <button className="flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] uppercase font-black tracking-widest text-gray-700 hover:text-gray-400 hover:bg-white/5 border border-dashed border-white/5 mt-2">
+                           <Plus className="w-3.5 h-3.5" /> New File
+                         </button>
+                      </div>
+
+                      <div className={`flex-1 w-full bg-[#141417] ${activeTab==='code'?'block':'hidden'}`}><SandpackCodeEditor showTabs={false} showLineNumbers={true} className="h-full w-full" /></div>
+                      <div className={`flex-1 w-full relative bg-white border-none ${activeTab==='preview'?'block':'hidden'}`}><SandpackPreview showOpenInCodeSandbox={false} showRefreshButton={true} className="h-full w-full" /></div>
+                   </div>
+                   
+                   {/* ⚠️ NEURAL CONSOLE (BOTTOM LOGS) */}
+                   <div className="h-32 bg-black border-t border-white/5 flex flex-col relative shrink-0">
+                      <div className="h-8 border-b border-white/5 flex items-center px-4 gap-4 justify-between bg-black/80 backdrop-blur-md">
+                         <div className="flex gap-4">
+                            <div className="flex items-center gap-1.5"><Terminal className="w-3 h-3 text-purple-400" /><span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Neural Console</span></div>
+                            <div className="flex items-center gap-1.5"><Cpu className="w-3 h-3 text-indigo-400" /><span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Titan Load: OK</span></div>
+                         </div>
+                         <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-1.5"><Activity className="w-3 h-3 text-green-400" /><span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Status: Syncing</span></div>
+                            <div className="flex items-center gap-1.5"><Layers className="w-3 h-3 text-blue-400" /><span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">V5.0.2 Agentic</span></div>
+                         </div>
+                      </div>
+                      <div className="flex-1 overflow-y-auto p-3 font-mono text-[10px] space-y-1 custom-scrollbar scroll-smooth">
+                         {logs.map((l, i) => (
+                           <div key={i} className="flex gap-3 text-white/40">
+                              <span className="text-gray-800 shrink-0">[{new Date().toLocaleTimeString([], { hour12: false })}]</span> 
+                              <span className={l.includes('[SYS]') ? 'text-indigo-400 font-bold' : 'text-white/60'}>{l}</span>
+                           </div>
+                         ))}
+                      </div>
+                   </div>
                 </SandpackLayout>
               </SandpackProvider>
             </div>
