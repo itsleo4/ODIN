@@ -43,8 +43,8 @@ export async function POST(req: Request) {
         apiKey:  customKey,
         baseURL: "https://integrate.api.nvidia.com/v1",
       });
-      // customModel lets user specify exact NVIDIA model (e.g. "moonshotai/kimi-k2-thinking")
-      modelId = customModel || "qwen/qwen3-235b-a22b-instruct";
+      // Corrected default for NVIDIA (qwen3-coder-480b-a35b-instruct is valid)
+      modelId = customModel || "qwen/qwen3-coder-480b-a35b-instruct";
 
     } else if (isGroqKey || customProvider === "groq") {
       provider = createOpenAI({

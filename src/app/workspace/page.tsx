@@ -109,20 +109,19 @@ export default function Workspace() {
      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-
   const handleAddKey = () => {
     if (!newKey.name.trim() || !newKey.key.trim()) return;
     const keyObj: CustomKey = {
       id: Math.random().toString(36).slice(2),
       name: newKey.name.trim(),
       key: newKey.key.trim(),
-      // Provider is optional — empty string means backend picks free-tier default
       provider: newKey.provider.trim().toLowerCase(),
-      modelId: "", // Never hardcode a model — let route.ts pick the right free-tier default
+      // Model ID is now correctly saved from the sidebar too
+      modelId: (newKey as any).modelId?.trim() || "", 
     };
     setCustomKeys([...customKeys, keyObj]);
     if (!selectedModel) setSelectedModel(keyObj.id);
-    setNewKey({ name: "", key: "", provider: "", modelId: "" });
+    setNewKey({ name: "", key: "", provider: "", modelId: "" } as any);
   };
 
   const removeKey = (id: string) => {
@@ -207,24 +206,40 @@ export default function Workspace() {
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let assistantContent = "";
+      let buffer = ""; // Buffer to handle chunked lines
       const aiMessageId = Math.random().toString(36);
       setMessages(prev => [...prev, { id: aiMessageId, role: "assistant", content: "" }]);
-
+      
       while (true) {
         const { done, value } = await reader!.read();
         if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
+        buffer += decoder.decode(value, { stream: true });
+        
+        let lines = buffer.split("\n");
+        buffer = lines.pop() || ""; // Keep the last partial line in buffer
+        
         for (const line of lines) {
-           if (line.trim().startsWith("0:")) {
+           const trimmed = line.trim();
+           if (trimmed.startsWith("0:")) {
               try {
-                const text = JSON.parse(line.trim().slice(2));
+                // Remove the "0:" prefix and any surrounding quotes if direct string
+                const content = trimmed.slice(2);
+                const text = content.startsWith('"') ? JSON.parse(content) : content;
                 assistantContent += text;
                 setMessages(prev => prev.map(m => m.id === aiMessageId ? { ...m, content: assistantContent } : m));
-              } catch (e) { assistantContent += line.trim().slice(2).replace(/^"/,"").replace(/"$/,""); }
+              } catch (e) {
+                // Fallback for non-JSON or malformed parts
+                assistantContent += trimmed.slice(2).replace(/^"/,"").replace(/"$/,"");
+              }
            }
         }
       }
+      // Process remaining buffer
+      if (buffer.trim().startsWith("0:")) {
+        const text = buffer.trim().slice(2).replace(/^"/,"").replace(/"$/,"");
+        assistantContent += text;
+      }
+      
       await supabase.from("messages").insert([{ conversation_id: convoId, role: "assistant", content: assistantContent }]);
       supabase.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", convoId).then(() => fetchConversations());
     } catch (err: any) { 
