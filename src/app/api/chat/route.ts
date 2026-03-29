@@ -1,4 +1,4 @@
-// ODIN NEURAL GRID (DIRECT PROTOCOL V4.2 - OPTIMIZED TITANS) 🛡️🫀🦾
+// ODIN NEURAL GRID (DIRECT PROTOCOL V4.4 - K2 TITANS SYNC) 🛡️🫀🦾
 export async function POST(req: Request) {
   try {
     const { messages, model } = await req.json();
@@ -7,9 +7,9 @@ export async function POST(req: Request) {
       return new Response("No messages.", { status: 400 });
     }
 
-    console.log(`[ODIN] Architecting with Optimized Titan: ${model}`);
+    console.log(`[ODIN] Architecting with K2 Titan: ${model}`);
 
-    // SANITIZATION: NVIDIA APIs strictly reject extra fields (like IDs or Attachments)
+    // SANITIZATION: NVIDIA APIs strictly reject extra fields
     const sanitizedMessages = messages.map((m: any) => ({
       role: m.role === 'assistant' ? 'assistant' : 'user',
       content: m.content
@@ -27,20 +27,24 @@ export async function POST(req: Request) {
       temperature: 0.1
     };
 
-    // ----------------- INTELLIGENCE CORE MAPPING (OPTIMIZED SET) -----------------
+    // ----------------- INTELLIGENCE CORE MAPPING (K2 SET) -----------------
 
     switch (model) {
+      case "Kimi-K2-Thinking":
+        apiKey = process.env.KIMI_K2_THINKING || "";
+        modelId = "moonshotai/kimi-k2-thinking";
+        break;
+      case "Step-3.5-Flash":
+        apiKey = process.env.STEP_3_5_FLASH || "";
+        modelId = "stepfun-ai/step-3.5-flash";
+        break;
+      case "Mistral-Small-3-24b":
+        apiKey = process.env.MISTRAL_SMALL_3_24B || "";
+        modelId = "mistralai/mistral-small-3.1-24b-instruct-2503";
+        break;
       case "GPT-OSS-20b":
         apiKey = process.env.GPT_OSS_20B || "";
         modelId = "openai/gpt-oss-20b";
-        break;
-      case "Mistral-Large-3-675b":
-        apiKey = process.env.MISTRAL_LARGE_3_675B || "";
-        modelId = "mistralai/mistral-large-3-675b-instruct-2512";
-        break;
-      case "GLM-5-Reasoning":
-        apiKey = process.env.GLM_5 || "";
-        modelId = "z-ai/glm-5";
         break;
       case "Qwen3-Coder-480b":
         apiKey = process.env.QWEN3_CODER_480B_A35B_INSTRUCT || "";
@@ -50,17 +54,13 @@ export async function POST(req: Request) {
         apiKey = process.env.DEEPSEEK_V3_2 || "";
         modelId = "deepseek-ai/deepseek-v3.2";
         break;
-      case "Stockmark-2-100b":
-        apiKey = process.env.STOCKMARK_2_100B_INSTRUCT || "";
-        modelId = "stockmark/stockmark-2-100b-instruct";
-        break;
       default:
-        apiKey = process.env.GPT_OSS_20B || "";
-        modelId = "openai/gpt-oss-20b";
+        apiKey = process.env.STEP_3_5_FLASH || "";
+        modelId = "stepfun-ai/step-3.5-flash";
     }
 
     if (!apiKey) {
-       return new Response(`0:"⚠️ Engine Access Denied: Missing Key for ${model} in Vercel Env."\n`, { headers: { "Content-Type": "text/plain" } });
+       return new Response(`0:"⚠️ Engine Access Denied: Missing Key for ${model}."\n`, { headers: { "Content-Type": "text/plain" } });
     }
 
     // ----------------- THE DIRECT FETCH EXECUTION -----------------
@@ -78,7 +78,7 @@ export async function POST(req: Request) {
 
     if (!response.ok) {
        const errData = await response.json().catch(() => ({ error: { message: "Unknown Intelligence Failure" } }));
-       return new Response(`0:"⚠️ ENGINE REJECTED (${model}): ${errData.error?.message || "Not Found/Unauthorized"}. Check your NVIDIA credits."\n`, { 
+       return new Response(`0:"⚠️ ENGINE REJECTED (${model}): ${errData.error?.message || "Not Found/Unauthorized"}. Ensure your NVIDIA credits are active."\n`, { 
           status: 200, headers: { "Content-Type": "text/plain" } 
        });
     }
