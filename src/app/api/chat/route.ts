@@ -1,4 +1,4 @@
-// ODIN NEURAL GRID (DIRECT PROTOCOL V5.0 - MULTIMODAL V2) 🛡️🫀🦾
+// ODIN NEURAL GRID (DIRECT PROTOCOL V5.0 - MULTIMODAL V2.3) 🛡️🫀🦾
 export async function POST(req: Request) {
   try {
     const { messages, model } = await req.json();
@@ -7,46 +7,43 @@ export async function POST(req: Request) {
       return new Response("No messages.", { status: 400 });
     }
 
-    console.log(`[ODIN] Architecting with Multimodal Titan: ${model}`);
+    // 1. VISION DETECTION: Identify if any message in the stream has an attachment
+    const hasVision = messages.some((m: any) => m.experimental_attachments && m.experimental_attachments.length > 0);
+    
+    // 2. CAPABILITY MAP: Identify which models support image input
+    const VISION_CAPABLE = ["Step-3.5-Flash", "Kimi-K2-Thinking", "DeepSeek-V3.2"];
+    let modelToUse = model;
+    let fallbackInfo = "";
 
-    // NEURAL MULTIMODAL CONVERTER: Formats images for NVIDIA NIM/OpenAI protocols
+    // 3. AUTO-FALLBACK LOGIC: If image exists but model lacks "eyes", switch to Step-3.5-Flash
+    if (hasVision && !VISION_CAPABLE.includes(model)) {
+       modelToUse = "Step-3.5-Flash";
+       fallbackInfo = `👁️ [SYS] Model ${model} is code-pure (Text-only). Routing vision via Step-3.5-Flash Titan. `;
+       console.log(`[ODIN] Vision Fallback: ${model} -> ${modelToUse}`);
+    }
+
+    console.log(`[ODIN] Architecting with Titan: ${modelToUse} ${hasVision ? '(Multimodal)' : '(Text)'}`);
+
+    // NEURAL MULTIMODAL CONVERTER: Formats images for NVIDIA NIM protocols
     const formattedMessages = messages.map((m: any) => {
-      // 1. Check for Attachments (Images)
       if (m.experimental_attachments && m.experimental_attachments.length > 0) {
         const content: any[] = [{ type: "text", text: m.content }];
-        
         m.experimental_attachments.forEach((att: any) => {
           if (att.contentType?.startsWith('image/') || att.url?.startsWith('data:image/')) {
-            content.push({
-              type: "image_url",
-              image_url: { url: att.url }
-            });
+            content.push({ type: "image_url", image_url: { url: att.url } });
           }
         });
-        
         return { role: m.role==='assistant'?'assistant':'user', content };
       }
-      
-      // 2. Default Text Content
       return { role: m.role==='assistant'?'assistant':'user', content: m.content };
     });
 
     let url = "https://integrate.api.nvidia.com/v1/chat/completions"; 
     let apiKey = "";
     let modelId = "";
-    let body: any = {
-      messages: [
-        { role: "system", content: "You are ODIN, an elite Agentic AI Architect. You can read images and files. Generate FULL web applications. Code only in TSX markdown blocks. Specify filenames like: [FILE: App.tsx]." },
-        ...formattedMessages
-      ],
-      stream: true,
-      temperature: 0.1,
-      max_tokens: 4096 
-    };
 
-    // ----------------- INTELLIGENCE CORE MAPPING (V5 TARGETS) -----------------
-
-    switch (model) {
+    // ----------------- STABILIZED TITAN IDENTIFIERS (V2.3) -----------------
+    switch (modelToUse) {
       case "Step-3.5-Flash":
         apiKey = process.env.STEP_3_5_FLASH || "";
         modelId = "stepfun-ai/step-3.5-flash";
@@ -57,7 +54,7 @@ export async function POST(req: Request) {
         break;
       case "Mistral-Small-3-24b":
         apiKey = process.env.MISTRAL_SMALL_3_24B || "";
-        modelId = "mistralai/mistral-small-3.1-24b-instruct-2503";
+        modelId = "mistralai/mistral-small-24b-instruct-2503"; 
         break;
       case "GPT-OSS-20b":
         apiKey = process.env.GPT_OSS_20B || "";
@@ -77,27 +74,49 @@ export async function POST(req: Request) {
     }
 
     if (!apiKey) {
-       return new Response(`0:"⚠️ Engine Access Denied: Missing Key for ${model}."\n`, { headers: { "Content-Type": "text/plain" } });
+       return new Response(`0:"⚠️ Engine Access Denied: Missing Key for ${modelToUse}."\n`, { headers: { "Content-Type": "text/plain" } });
     }
 
-    // ----------------- THE MULTIMODAL EXECUTION -----------------
-
-    body.model = modelId;
     const response = await fetch(url, {
       method: "POST",
       headers: { 
         "Authorization": `Bearer ${apiKey}`,
-        "API_KEY": apiKey, 
         "Content-Type": "application/json" 
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify({
+        model: modelId,
+        messages: [
+          { role: "system", content: "You are ODIN, an elite Agentic AI Architect. Code only in TSX blocks. Specify filenames like: [FILE: App.tsx]." },
+          ...formattedMessages
+        ],
+        stream: true,
+        temperature: 0.1,
+        max_tokens: 4096 
+      })
     });
 
     if (!response.ok) {
        const errData = await response.json().catch(() => ({ error: { message: "Internal Neural Failure" } }));
-       return new Response(`0:"⚠️ ENGINE REJECTED (${model}): ${errData.error?.message || "Not Found/Unauthorized"}. Note: Some titans have stricter vision limits."\n`, { 
+       return new Response(`0:"⚠️ ENGINE REJECTED (${modelToUse}): ${errData.error?.message || "Not Found/Unauthorized"}. Profile Key mismatch."\n`, { 
           status: 200, headers: { "Content-Type": "text/plain" } 
        });
+    }
+
+    // 4. INJECT FALLBACK INFO IF NECESSARY
+    if (fallbackInfo) {
+       const stream = new ReadableStream({
+          async start(controller) {
+             controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(fallbackInfo)}\n`));
+             const reader = response.body!.getReader();
+             while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                controller.enqueue(value);
+             }
+             controller.close();
+          }
+       });
+       return new Response(stream);
     }
 
     return new Response(response.body);

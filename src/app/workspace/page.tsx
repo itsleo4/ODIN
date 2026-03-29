@@ -379,8 +379,17 @@ export default function Workspace() {
                </button>
                {isModelDropdownOpen && (
                   <div className="absolute top-14 right-6 w-52 bg-[#1c1c1f] border border-white/10 rounded-2xl shadow-3xl p-2 z-[200]">
-                    {['Step-3.5-Flash', 'Kimi-K2-Thinking', 'Mistral-Small-3-24b', 'Qwen3-Coder-480b', 'DeepSeek-V3.2'].map(m => (
-                      <button key={m} onClick={() => { setSelectedModel(m); setIsModelDropdownOpen(false); }} className={`w-full text-left px-3 py-2.5 rounded-xl transition-all text-[9px] font-black uppercase tracking-widest ${selectedModel===m ? 'text-purple-400 bg-purple-500/5' : 'text-gray-500 hover:text-gray-300'}`}>{m}</button>
+                    {[
+                      { name: 'Step-3.5-Flash', vision: true },
+                      { name: 'Kimi-K2-Thinking', vision: true },
+                      { name: 'Mistral-Small-3-24b', vision: false },
+                      { name: 'Qwen3-Coder-480b', vision: false },
+                      { name: 'DeepSeek-V3.2', vision: true }
+                    ].map(m => (
+                      <button key={m.name} onClick={() => { setSelectedModel(m.name); setIsModelDropdownOpen(false); }} className={`w-full text-left px-3 py-2.5 rounded-xl transition-all text-[9px] font-black uppercase tracking-widest flex items-center justify-between ${selectedModel===m.name ? 'text-purple-400 bg-purple-500/5' : 'text-gray-500 hover:text-gray-300'}`}>
+                        {m.name}
+                        {m.vision && <div className="flex items-center gap-1 opacity-40"><span className="text-[10px]">👁️</span></div>}
+                      </button>
                     ))}
                   </div>
                )}
